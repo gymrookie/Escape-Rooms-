@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUR 242 — Mobility Unit 11/12 | Escape Room</title>
+<style>
+/* ── DESIGN TOKENS ──────────────────────────────────────── */
+:root {
+  /* Deep ocean-medical palette */
+  --bg:        #07111a;
+  --bg2:       #0d1e2b;
+  --bg3:       #122636;
+  --bg4:       #091520;
+  --border:    #1a3347;
+  --border2:   #234560;
+  --teal:      #00c4b4;
+  --teal-dim:  #002b28;
+  --blue:      #3b9eff;
+  --blue-dim:  #0a1f3d;
+  --amber:     #f0a500;
+  --amber-dim: #2d1e00;
+  --red:       #f05252;
+  --red-dim:   #3d1010;
+  --green:     #22c55e;
+  --green-dim: #0a2618;
+  --purple:    #a78bfa;
+  --purple-dim:#1c1040;
+  --coral:     #fb923c;
+  --coral-dim: #3d1800;
+  --text:      #e2eff8;
+  --text2:     #7fa8c0;
+  --text3:     #3d637a;
+  --mono:      'Courier New', monospace;
+  --r:         10px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ── SCREENS ──────────────────────────────────────────── */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── SHARED COMPONENTS ────────────────────────────────── */
+.btn{border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--teal);color:#000;}
+.btn-primary:hover{background:#00a898;}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border2);color:var(--text);}
+.btn-secondary:hover{background:#1a3347;}
+.btn-danger{background:var(--red-dim);border:1px solid var(--red);color:var(--red);}
+.btn-amber{background:var(--amber-dim);border:1px solid var(--amber);color:var(--amber);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-full{width:100%;}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.4px;}
+.tag-teal{background:var(--teal-dim);color:var(--teal);}
+.tag-blue{background:var(--blue-dim);color:var(--blue);}
+.tag-amber{background:var(--amber-dim);color:var(--amber);}
+.tag-green{background:var(--green-dim);color:var(--green);}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:.875rem;}
+.form-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+.form-input{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;font-size:14px;color:var(--text);}
+.form-input:focus{outline:none;border-color:var(--teal);}
+.form-input.code-input{font-family:var(--mono);font-size:1.8rem;font-weight:700;text-align:center;letter-spacing:8px;text-transform:uppercase;color:var(--teal);}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.75rem;max-width:460px;width:100%;}
+.panel-title{font-size:1rem;font-weight:700;margin-bottom:1.25rem;}
+.divider{height:1px;background:var(--border);margin:1rem 0;}
+
+/* Toast / Loading */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.7rem 1.25rem;font-size:14px;font-weight:600;transition:transform .3s;z-index:999;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.teal{border-color:var(--teal);color:var(--teal);}
+.toast.red{border-color:var(--red);color:var(--red);}
+.toast.amber{border-color:var(--amber);color:var(--amber);}
+.loading-overlay{position:fixed;inset:0;background:rgba(7,17,26,.85);display:flex;align-items:center;justify-content:center;z-index:100;display:none;}
+.loading-overlay.show{display:flex;}
+.spinner{width:34px;height:34px;border:3px solid var(--bg3);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════
+   LOBBY
+════════════════════════════════════════════ */
+#lobby{align-items:center;justify-content:center;padding:2rem;
+  background:radial-gradient(ellipse at 50% -5%, #0d2a3a 0%, #07111a 65%);}
+.logo-badge{display:inline-flex;align-items:center;gap:7px;background:var(--teal-dim);border:1px solid var(--teal);color:var(--teal);border-radius:20px;padding:4px 15px;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1.25rem;}
+.logo-badge::before{content:'';width:6px;height:6px;background:var(--teal);border-radius:50%;animation:blink 1.6s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.logo-title{font-size:clamp(2rem,6vw,3.8rem);font-weight:800;letter-spacing:-2px;line-height:1.05;background:linear-gradient(135deg,#00c4b4,#3b9eff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:.5rem;}
+.logo-sub{color:var(--text2);font-size:14px;text-align:center;margin-bottom:2rem;letter-spacing:.3px;}
+.lobby-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:560px;width:100%;margin-bottom:2rem;}
+@media(max-width:500px){.lobby-grid{grid-template-columns:1fr;}}
+.lobby-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;}
+.lobby-card:hover{border-color:var(--teal);transform:translateY(-3px);background:var(--bg3);}
+.lc-icon{font-size:2.2rem;margin-bottom:.6rem;}
+.lc-title{font-size:.95rem;font-weight:700;margin-bottom:.3rem;}
+.lc-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+/* X-ray decoration */
+.xray-strip{width:100%;max-width:380px;height:44px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:1rem auto;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 12px;}
+.bone-seg{height:8px;border-radius:4px;background:rgba(0,196,180,.2);flex:1;}
+.bone-seg.lit{background:rgba(0,196,180,.6);}
+
+/* ════════════════════════════════════════════
+   PRESENTATION
+════════════════════════════════════════════ */
+#presentation{background:var(--bg);}
+.pres-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.pres-title-bar{flex:1;}
+.pres-title-bar h2{font-size:.95rem;font-weight:700;}
+.pres-title-bar p{font-size:12px;color:var(--text2);}
+.slide-counter{font-size:12px;font-family:var(--mono);color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;}
+.pres-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:1.5rem;overflow-y:auto;}
+.slide-viewport{width:100%;max-width:900px;position:relative;}
+.slide{display:none;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);min-height:420px;position:relative;}
+.slide.active{display:flex;flex-direction:column;}
+/* Title slide */
+.s-hero{background:linear-gradient(135deg,#091f30 0%,#0d2b40 50%,#091520 100%);align-items:center;justify-content:center;text-align:center;padding:3rem 2rem;min-height:480px;}
+.s-hero-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--teal);margin-bottom:1rem;}
+.s-hero-title{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:.75rem;background:linear-gradient(135deg,#fff 30%,#00c4b4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.s-hero-sub{font-size:1rem;color:var(--text2);max-width:420px;line-height:1.6;}
+.s-hero-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:1.5rem;}
+/* Content slide */
+.s-content{padding:2rem 2.5rem;gap:0;}
+.s-content-inner{flex:1;display:flex;flex-direction:column;gap:1.25rem;}
+.slide-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--teal);margin-bottom:.25rem;font-weight:700;}
+.slide-h1{font-size:1.7rem;font-weight:800;letter-spacing:-1px;margin-bottom:1rem;color:var(--text);}
+.slide-h1 span{color:var(--teal);}
+/* Two-column */
+.s-two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;flex:1;}
+@media(max-width:600px){.s-two-col{grid-template-columns:1fr;}}
+.s-col-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;}
+.s-col-card h3{font-size:14px;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:8px;}
+.s-col-card h3 .icon-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.s-col-card ul{list-style:none;display:grid;gap:5px;}
+.s-col-card li{font-size:13px;color:var(--text2);padding-left:16px;position:relative;line-height:1.45;}
+.s-col-card li::before{content:'›';position:absolute;left:0;color:var(--teal);}
+/* Icon grid */
+.s-icon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;flex:1;}
+.icon-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem 1.125rem;display:flex;gap:10px;align-items:flex-start;}
+.icon-card .ic-dot{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px;}
+.icon-card .ic-body h4{font-size:13px;font-weight:700;margin-bottom:4px;}
+.icon-card .ic-body p{font-size:12px;color:var(--text2);line-height:1.45;}
+/* Stat row */
+.s-stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;}
+.stat-box .sv{font-size:2rem;font-weight:800;color:var(--teal);font-family:var(--mono);line-height:1;}
+.stat-box .sl{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+/* Numbered steps */
+.s-steps{display:grid;gap:10px;flex:1;}
+.step-item{display:flex;gap:12px;align-items:flex-start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem 1.125rem;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--teal);color:#000;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-body h4{font-size:13px;font-weight:700;margin-bottom:3px;}
+.step-body p{font-size:12px;color:var(--text2);line-height:1.5;}
+/* Alert / call-out */
+.slide-alert{background:linear-gradient(90deg,rgba(240,82,82,.08),rgba(240,82,82,.02));border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:.875rem 1.125rem;font-size:13px;color:var(--text2);line-height:1.6;}
+.slide-alert strong{color:var(--red);}
+.slide-info{background:linear-gradient(90deg,rgba(0,196,180,.08),rgba(0,196,180,.02));border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:.875rem 1.125rem;font-size:13px;color:var(--text2);line-height:1.6;}
+.slide-info strong{color:var(--teal);}
+/* Slide nav */
+.slide-nav{display:flex;align-items:center;justify-content:center;gap:1rem;padding:1rem;flex-wrap:wrap;}
+.slide-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:400px;justify-content:center;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);cursor:pointer;transition:all .15s;}
+.sdot.active{background:var(--teal);border-color:var(--teal);width:18px;border-radius:4px;}
+.sdot.done{background:var(--border2);}
+
+/* ════════════════════════════════════════════
+   WAITING ROOM
+════════════════════════════════════════════ */
+#waiting{background:var(--bg4);}
+.wait-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.room-code-pill{background:var(--teal-dim);border:1px solid var(--teal);color:var(--teal);border-radius:8px;padding:5px 14px;font-family:var(--mono);font-size:1.3rem;font-weight:700;letter-spacing:4px;}
+.wait-body{flex:1;padding:2rem;max-width:700px;margin:0 auto;width:100%;}
+.wait-info{background:var(--teal-dim);border:1px solid var(--teal);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:13px;color:var(--teal);line-height:1.6;}
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem;}
+.player-slot{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.875rem;text-align:center;}
+.player-slot.filled{border-color:var(--teal);background:var(--bg3);}
+.player-slot.empty{opacity:.35;}
+.ps-avatar{font-size:1.6rem;margin-bottom:5px;}
+.ps-name{font-size:12px;font-weight:600;}
+.ps-badge{font-size:11px;color:var(--text3);margin-top:2px;}
+.ps-badge.host{color:var(--amber);}
+
+/* ════════════════════════════════════════════
+   GAME HUB
+════════════════════════════════════════════ */
+#game{background:var(--bg);}
+.game-topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.gt-room{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;}
+.gt-title{font-size:.9rem;font-weight:700;flex:1;}
+.vital-chip{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:5px;}
+.vc-label{color:var(--text3);}
+.vc-val{color:var(--teal);font-weight:700;}
+.scoreboard-strip{background:var(--bg4);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.scoreboard-strip::-webkit-scrollbar{display:none;}
+.sb-player{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:5px 11px;display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:110px;transition:border-color .3s;}
+.sb-player.me{border-color:var(--teal);}
+.sb-avatar{font-size:1rem;}
+.sb-name{font-size:11px;font-weight:600;}
+.sb-score{font-size:11px;font-family:var(--mono);color:var(--amber);}
+.game-body{flex:1;padding:1.5rem;max-width:900px;margin:0 auto;width:100%;}
+.hub-note{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:13px;color:var(--text2);line-height:1.6;}
+.hub-note strong{color:var(--text);}
+.room-grid-game{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px;}
+.rcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.rcard.bones::before{background:var(--blue);}
+.rcard.joints::before{background:var(--teal);}
+.rcard.spine::before{background:var(--purple);}
+.rcard.auto::before{background:var(--coral);}
+.rcard.meds::before{background:var(--amber);}
+.rcard.dosage::before{background:var(--green);}
+.rcard.casestudy::before{background:var(--red);}
+.rcard:hover:not(.locked){transform:translateY(-3px);border-color:var(--border2);}
+.rcard.completed{border-color:#1a5535;background:var(--bg3);}
+.rcard.locked{opacity:.4;cursor:not-allowed;}
+.rcard-eye{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+.bones .rcard-eye{color:var(--blue);}
+.joints .rcard-eye{color:var(--teal);}
+.spine .rcard-eye{color:var(--purple);}
+.auto .rcard-eye{color:var(--coral);}
+.meds .rcard-eye{color:var(--amber);}
+.dosage .rcard-eye{color:var(--green);}
+.casestudy .rcard-eye{color:var(--red);}
+.rcard-name{font-size:1rem;font-weight:700;margin-bottom:4px;}
+.rcard-desc{font-size:12px;color:var(--text2);line-height:1.4;margin-bottom:.75rem;}
+.rcard-foot{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);}
+.rs-open{background:var(--blue-dim);color:var(--blue);padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px;}
+.rs-done{background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px;}
+.rs-locked{background:#131e28;color:var(--text3);padding:2px 8px;border-radius:20px;font-size:11px;}
+
+/* ════════════════════════════════════════════
+   QUESTION SCREEN
+════════════════════════════════════════════ */
+#qscreen{background:var(--bg);}
+.q-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.q-header-info{flex:1;}
+.q-header-info h2{font-size:.95rem;font-weight:700;}
+.q-header-info p{font-size:12px;color:var(--text2);}
+.progress-dots{display:flex;gap:5px;}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);transition:all .2s;}
+.pdot.done{background:var(--teal);border-color:var(--teal);}
+.pdot.active{background:var(--blue);border-color:var(--blue);width:20px;border-radius:4px;}
+.answered-tracker{background:var(--bg2);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--text3);}
+.at-pip{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.at-pip.answered{background:var(--teal);}
+.q-body{flex:1;padding:1.5rem;max-width:800px;margin:0 auto;width:100%;}
+.q-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:1.75rem;margin-bottom:1rem;}
+.q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.q-num-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+.q-pts-badge{background:var(--amber-dim);color:var(--amber);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.q-scenario{background:var(--bg3);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:.875rem 1.125rem;margin-bottom:1.125rem;font-size:13.5px;color:var(--text2);line-height:1.6;}
+.q-text{font-size:1rem;line-height:1.6;margin-bottom:1.25rem;color:var(--text);font-weight:500;}
+.opts{display:grid;gap:8px;}
+.opt-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.875rem 1.125rem;cursor:pointer;font-size:13.5px;color:var(--text);text-align:left;transition:all .15s;line-height:1.5;display:flex;gap:10px;align-items:flex-start;}
+.opt-btn:hover:not(:disabled){background:#1a3044;border-color:var(--border2);}
+.opt-btn.correct{background:var(--green-dim)!important;border-color:var(--green)!important;color:var(--green)!important;}
+.opt-btn.wrong{background:var(--red-dim)!important;border-color:var(--red)!important;color:var(--red)!important;}
+.opt-btn:disabled{cursor:not-allowed;}
+.opt-letter{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--border);font-size:11px;font-weight:700;margin-top:1px;flex-shrink:0;}
+/* SATA */
+.sata-opt{display:flex;gap:10px;align-items:flex-start;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.875rem 1.125rem;cursor:pointer;font-size:13.5px;color:var(--text);transition:all .15s;line-height:1.5;}
+.sata-opt:hover:not(.disabled){background:#1a3044;border-color:var(--border2);}
+.sata-opt.selected{border-color:var(--teal);background:var(--teal-dim);}
+.sata-opt.correct-sel{background:var(--green-dim)!important;border-color:var(--green)!important;color:var(--green)!important;}
+.sata-opt.incorrect-sel{background:var(--red-dim)!important;border-color:var(--red)!important;color:var(--red)!important;}
+.sata-opt.missed{border-color:var(--amber)!important;color:var(--amber)!important;}
+.sata-opt.disabled{cursor:not-allowed;}
+.sata-check{width:18px;height:18px;border-radius:4px;background:var(--bg4);border:1.5px solid var(--border2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;}
+.sata-opt.selected .sata-check{background:var(--teal);border-color:var(--teal);color:#000;}
+.sata-submit-btn{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;margin-top:.75rem;transition:all .15s;}
+.sata-submit-btn:hover{background:#0f2d5a;}
+/* Dosage */
+.formula-block{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.875rem 1.125rem;margin-bottom:1.125rem;font-family:var(--mono);font-size:12.5px;color:var(--amber);line-height:2;}
+.formula-block strong{color:var(--text);font-family:inherit;}
+.dosage-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:.875rem;}
+.dosage-inp{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;font-size:1rem;color:var(--text);width:140px;font-family:var(--mono);}
+.dosage-inp:focus{outline:none;border-color:var(--teal);}
+.dosage-unit{font-size:13px;color:var(--text2);}
+.btn-submit-dose{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal);border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-submit-dose:hover{background:#003330;}
+.feedback-box{border-radius:8px;padding:.875rem 1.125rem;font-size:13.5px;line-height:1.6;margin-top:.875rem;}
+.fb-correct{background:var(--green-dim);border:1px solid var(--green);color:#6ee7a8;}
+.fb-wrong{background:var(--red-dim);border:1px solid var(--red);color:#fca08a;}
+.first-badge{display:inline-flex;align-items:center;gap:6px;background:var(--amber-dim);border:1px solid var(--amber);color:var(--amber);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;margin-top:.5rem;}
+.btn-next-q{background:linear-gradient(135deg,#004d45,#112e5e);color:#fff;border:none;border-radius:8px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;display:none;margin-top:.875rem;transition:opacity .2s;}
+.btn-next-q.vis{display:inline-block;}
+.btn-next-q:hover{opacity:.85;}
+
+/* ════════════════════════════════════════════
+   ROOM COMPLETE
+════════════════════════════════════════════ */
+#rcomplete{background:var(--bg);align-items:center;justify-content:center;padding:2rem;text-align:center;}
+.rc-icon{font-size:4rem;margin-bottom:1rem;}
+.rc-title{font-size:2rem;font-weight:800;margin-bottom:.5rem;}
+.rc-sub{color:var(--text2);max-width:420px;line-height:1.6;margin-bottom:1.75rem;}
+.rc-scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;max-width:520px;width:100%;margin-bottom:1.75rem;}
+.rc-ps{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.875rem;text-align:center;}
+.rc-ps.winner{border-color:var(--amber);}
+.rc-ps-name{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.rc-ps-val{font-size:1.5rem;font-weight:800;color:var(--amber);font-family:var(--mono);}
+.kf-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:left;max-width:580px;width:100%;margin-bottom:1.75rem;}
+.kf-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:.875rem;font-weight:600;}
+.kf-list{list-style:none;display:grid;gap:5px;}
+.kf-list li{font-size:13px;color:var(--text2);padding-left:18px;position:relative;line-height:1.45;}
+.kf-list li::before{content:'→';position:absolute;left:0;color:var(--teal);font-size:11px;}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+/* ════════════════════════════════════════════
+   FINAL
+════════════════════════════════════════════ */
+#final{background:radial-gradient(ellipse at 50% 30%,#0d2a3a 0%,#07111a 65%);align-items:center;justify-content:center;padding:2rem;text-align:center;}
+.final-h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-2px;margin-bottom:.5rem;}
+.cert-card{background:var(--bg2);border:2px solid var(--amber);border-radius:16px;padding:2rem 3rem;max-width:500px;width:100%;margin:1.5rem auto;}
+.cert-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--amber);margin-bottom:.5rem;}
+.podium-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;max-width:500px;width:100%;margin:1.25rem auto;}
+.podium-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.875rem;}
+.podium-rank{font-size:1.5rem;}
+.podium-name{font-size:12px;color:var(--text2);margin:4px 0;}
+.podium-score{font-size:1.25rem;font-weight:800;color:var(--amber);font-family:var(--mono);}
+
+/* ════════════════════════════════════════════
+   ANSWER SHEET
+════════════════════════════════════════════ */
+#answersheet{background:var(--bg);}
+.as-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.as-body{flex:1;padding:1.5rem;max-width:950px;margin:0 auto;width:100%;}
+.as-tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;scrollbar-width:none;}
+.as-tab-bar::-webkit-scrollbar{display:none;}
+.as-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);padding:9px 14px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.as-tab.active{color:var(--teal);border-bottom-color:var(--teal);}
+.as-q-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:12px;break-inside:avoid;}
+.as-q-meta{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.as-q-scenario{background:var(--bg3);border-left:3px solid var(--teal);padding:.6rem .875rem;border-radius:0 6px 6px 0;font-size:13px;color:var(--text2);margin-bottom:8px;line-height:1.5;}
+.as-q-text{font-size:14px;color:var(--text);font-weight:500;margin-bottom:10px;line-height:1.5;}
+.as-opts-list{list-style:none;display:grid;gap:4px;margin-bottom:10px;}
+.as-opts-list li{font-size:13px;color:var(--text2);padding-left:20px;position:relative;line-height:1.45;}
+.as-opts-list li.correct{color:var(--teal);font-weight:600;}
+.as-opts-list li::before{content:'○';position:absolute;left:0;font-size:11px;}
+.as-opts-list li.correct::before{content:'●';color:var(--teal);}
+.as-formula-block{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.6rem .875rem;font-family:var(--mono);font-size:12px;color:var(--amber);margin-bottom:8px;line-height:1.8;}
+.as-answer-box{background:var(--green-dim);border:1px solid var(--green);border-radius:6px;padding:.6rem .875rem;font-size:13px;color:var(--green);margin-bottom:8px;font-weight:700;}
+.as-rationale{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.6rem .875rem;font-size:13px;color:var(--text2);line-height:1.6;}
+.as-kf{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;}
+.as-kf h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:.75rem;}
+.as-kf ul{list-style:none;display:grid;gap:5px;}
+.as-kf li{font-size:13px;color:var(--text2);padding-left:18px;position:relative;line-height:1.45;}
+.as-kf li::before{content:'→';position:absolute;left:0;color:var(--teal);font-size:11px;}
+.as-section-hdr{font-size:1.05rem;font-weight:700;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+
+@media(max-width:600px){
+  .wait-body,.game-body,.q-body,.as-body,.pres-body{padding:1rem;}
+  .q-card{padding:1.25rem;}
+  .s-content{padding:1.25rem;}
+}
+@media print{
+  body{background:#fff;color:#000;}
+  .screen{display:none!important;}
+  #answersheet{display:block!important;min-height:unset;}
+  .as-header button,.as-tab-bar{display:none;}
+  .as-q-item{border:1px solid #ccc;}
+  .as-answer-box{background:#e6f4ea;color:#1a5c30;border-color:#4caf50;}
+  .as-rationale,.as-kf{background:#f5f5f5;color:#333;}
+  .as-formula-block{background:#fef9e8;color:#7a5900;}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+
+<!-- ═══════════════════════════════════════
+     LOBBY
+═══════════════════════════════════════ -->
+<div id="lobby" class="screen active">
+  <div class="logo-badge">NUR 242 · Units 11/12 · Nursing Education</div>
+  <div class="logo-title">Mobility &<br>Musculoskeletal</div>
+  <div class="logo-sub">Interactive Presentation + Multiplayer Escape Room</div>
+  <div class="xray-strip" id="xray">
+    <div class="bone-seg lit"></div><div class="bone-seg"></div>
+    <div class="bone-seg lit"></div><div class="bone-seg lit"></div>
+    <div class="bone-seg"></div><div class="bone-seg lit"></div>
+    <div class="bone-seg"></div><div class="bone-seg lit"></div>
+    <div class="bone-seg lit"></div><div class="bone-seg"></div>
+  </div>
+  <div class="lobby-grid">
+    <div class="lobby-card" onclick="openPresentation()">
+      <div class="lc-icon">📑</div>
+      <div class="lc-title">View Presentation</div>
+      <div class="lc-desc">Full Units 11/12 slide content with RA Case Study.</div>
+    </div>
+    <div class="lobby-card" onclick="showPanel('create-panel')">
+      <div class="lc-icon">🏥</div>
+      <div class="lc-title">Create Room</div>
+      <div class="lc-desc">Host a multiplayer escape room. Share the code.</div>
+    </div>
+    <div class="lobby-card" onclick="showPanel('join-panel')">
+      <div class="lc-icon">🔗</div>
+      <div class="lc-title">Join Room</div>
+      <div class="lc-desc">Enter a 4-letter code to join a teammate's game.</div>
+    </div>
+    <div class="lobby-card" onclick="startSolo()">
+      <div class="lc-icon">👤</div>
+      <div class="lc-title">Solo Practice</div>
+      <div class="lc-desc">Play all rooms alone. Answer sheet always available.</div>
+    </div>
+  </div>
+
+  <div class="panel" id="create-panel" style="display:none;margin-top:1.5rem;">
+    <div class="panel-title">🏥 Create Room</div>
+    <div class="form-group"><label class="form-label">Your Name</label><input class="form-input" id="create-name" placeholder="Nurse Rivera" maxlength="20"/></div>
+    <div class="form-group"><label class="form-label">Team Name (optional)</label><input class="form-input" id="create-team" placeholder="Night Shift Crew"/></div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-primary btn-full" onclick="createRoom()">Create →</button><button class="btn btn-secondary" onclick="hidePanels()">Cancel</button></div>
+  </div>
+  <div class="panel" id="join-panel" style="display:none;margin-top:1.5rem;">
+    <div class="panel-title">🔗 Join Room</div>
+    <div class="form-group"><label class="form-label">Your Name</label><input class="form-input" id="join-name" placeholder="Nurse Chen" maxlength="20"/></div>
+    <div class="form-group"><label class="form-label">Room Code</label><input class="form-input code-input" id="join-code" placeholder="ABCD" maxlength="4"/></div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-primary btn-full" onclick="joinRoom()">Join →</button><button class="btn btn-secondary" onclick="hidePanels()">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PRESENTATION
+═══════════════════════════════════════ -->
+<div id="presentation" class="screen">
+  <div class="pres-header">
+    <button class="btn btn-sm btn-secondary" onclick="showScreen('lobby')">← Back</button>
+    <div class="pres-title-bar"><h2>NUR 242 — Mobility &amp; Musculoskeletal</h2><p>Units 11/12 | Use arrows to navigate slides</p></div>
+    <div class="slide-counter"><span id="cur-slide">1</span> / <span id="tot-slides">0</span></div>
+    <button class="btn btn-sm btn-primary" onclick="showPanel('create-panel');showScreen('lobby');">Play Escape Room →</button>
+  </div>
+  <div class="pres-body">
+    <div class="slide-viewport">
+      <div id="slides-container"></div>
+      <div class="slide-nav">
+        <button class="btn btn-secondary btn-sm" onclick="prevSlide()">← Prev</button>
+        <div class="slide-dots" id="slide-dots"></div>
+        <button class="btn btn-secondary btn-sm" onclick="nextSlide()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     WAITING ROOM
+═══════════════════════════════════════ -->
+<div id="waiting" class="screen">
+  <div class="wait-header">
+    <h2 id="wait-title" style="font-size:1rem;font-weight:700;">Waiting Room</h2>
+    <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text2);">Code:</span><div class="room-code-pill" id="wait-code">----</div></div>
+    <div style="display:flex;gap:8px;margin-left:auto;"><button class="btn btn-sm btn-secondary" onclick="copyCode()">📋 Copy</button><button class="btn btn-sm btn-danger" onclick="goLobby()">Leave</button></div>
+  </div>
+  <div class="wait-body">
+    <div class="wait-info">📢 Share this room code with teammates. The host can start when everyone has joined. Up to 6 players. <strong>First correct answer</strong> earns full points; later correct answers earn 50% points. Wrong answers cost a shared team heart.</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:.75rem;">Players (<span id="player-count">0</span>/6):</div>
+    <div class="players-grid" id="players-grid"></div>
+    <div id="start-btn-area"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     GAME HUB
+═══════════════════════════════════════ -->
+<div id="game" class="screen">
+  <div class="game-topbar">
+    <span class="gt-room" id="gt-room">SOLO</span>
+    <span class="gt-title" id="gt-title">Mobility Escape Room</span>
+    <div class="vital-chip"><span class="vc-label">HEARTS</span><span class="vc-val" id="top-hearts">❤️❤️❤️</span></div>
+    <div class="vital-chip"><span class="vc-label">PTS</span><span class="vc-val" id="top-score">0</span></div>
+    <button class="btn btn-sm btn-secondary" onclick="openAnswerSheet()" style="margin-left:auto;">📋 Answers</button>
+  </div>
+  <div class="scoreboard-strip" id="scoreboard-strip"></div>
+  <div class="game-body">
+    <div class="hub-note"><strong>Multiplayer:</strong> All teammates see the same question simultaneously. First correct answer = <strong>full points</strong>; later correct = <strong>50% points</strong>. Wrong answers cost a <strong>shared team heart</strong>. Three hearts per room — lose all to reset.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div style="font-size:1rem;font-weight:700;">🗺 Select a Room</div>
+      <div style="font-size:12px;color:var(--text2);">Unlock sequentially</div>
+    </div>
+    <div class="room-grid-game" id="room-grid-game"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     QUESTION SCREEN
+═══════════════════════════════════════ -->
+<div id="qscreen" class="screen">
+  <div class="q-header">
+    <button class="btn btn-sm btn-secondary" onclick="backToHub()">← Hub</button>
+    <div class="q-header-info"><h2 id="q-room-name">Room</h2><p id="q-room-sub">Subtitle</p></div>
+    <div id="q-hearts" style="display:flex;gap:3px;font-size:15px;"></div>
+    <div class="progress-dots" id="q-dots"></div>
+  </div>
+  <div class="answered-tracker" id="answered-tracker"><span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);">Answered:</span></div>
+  <div class="q-body"><div id="q-area"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     ROOM COMPLETE
+═══════════════════════════════════════ -->
+<div id="rcomplete" class="screen">
+  <div class="rc-icon">🔓</div>
+  <div class="rc-title">Room Cleared!</div>
+  <div class="rc-sub" id="rc-sub">Great clinical work!</div>
+  <div class="rc-scores" id="rc-scores"></div>
+  <div class="kf-box" id="kf-box"></div>
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="backToHub()">← Hub</button>
+    <button class="btn btn-primary" id="btn-next-room" onclick="goNextRoom()">Next Room →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     FINAL
+═══════════════════════════════════════ -->
+<div id="final" class="screen">
+  <div style="font-size:5rem;margin-bottom:1rem;">🏆</div>
+  <div class="final-h1">Escaped!</div>
+  <p style="color:var(--text2);max-width:480px;margin:0 auto .5rem;font-size:14px;line-height:1.6;">Musculoskeletal mastery achieved. Certificate earned.</p>
+  <div class="cert-card">
+    <div class="cert-label">🎓 Mobility Specialist Certificate — NUR 242</div>
+    <div class="podium-grid" id="final-podium" style="margin:1rem 0 0;"></div>
+  </div>
+  <div class="btn-group" style="margin-top:1.5rem;">
+    <button class="btn btn-secondary" onclick="openAnswerSheet()">📋 Study Sheet</button>
+    <button class="btn btn-primary" onclick="goLobby()">Play Again</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     ANSWER SHEET
+═══════════════════════════════════════ -->
+<div id="answersheet" class="screen">
+  <div class="as-header">
+    <button class="btn btn-sm btn-secondary" onclick="closeAnswerSheet()">← Back</button>
+    <div style="flex:1;"><div style="font-size:1rem;font-weight:700;">📋 Mobility Escape Room — Answer Sheet</div><div style="font-size:12px;color:var(--text2);">Full questions, answers &amp; clinical rationales</div></div>
+    <button class="btn btn-sm btn-amber" onclick="window.print()">🖨️ Print / PDF</button>
+  </div>
+  <div class="as-body">
+    <div class="as-tab-bar" id="as-tabs"></div>
+    <div id="as-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  SLIDE DATA
+// ═══════════════════════════════════════════════════
+const SLIDES = [
+  {
+    type:'hero',
+    eyebrow:'NUR 242 · Units 11 / 12',
+    title:'Mobility &\nMusculoskeletal',
+    sub:'Fractures, Arthritis, Osteoporosis, Osteomyelitis, Arthroplasty & Compassionate Care',
+    tags:['Pathophysiology','Clinical Assessment','Pharmacology','Nursing Care']
+  },
+  {
+    type:'two-col',
+    eyebrow:'STRAINS & SPRAINS',
+    title:'Muscle vs. <span>Ligament</span> Injury',
+    left:{title:'Strain — Muscle/Tendon',color:'#3b9eff',icon:'💪',items:['Injury to muscle or tendon tissue','1st degree: mild overstretching','2nd degree: partial tearing','3rd degree: complete rupture','Common in athletes & workers']},
+    right:{title:'Sprain — Ligaments',color:'#a78bfa',icon:'🦴',items:['Injury to joint ligaments','1st degree: minor stretching','2nd degree: partial tear','3rd degree: full ligament tear','Ankles & wrists most common']}
+  },
+  {
+    type:'icon-grid',
+    eyebrow:'FRACTURES',
+    title:'Types of <span>Fractures</span>',
+    cards:[
+      {icon:'🦴',bg:'#0a1f3d',title:'Closed',text:'Bone broken; skin intact'},
+      {icon:'⚠️',bg:'#3d1000',title:'Open',text:'Bone protrudes through skin; high infection risk'},
+      {icon:'📐',bg:'#1c1040',title:'Comminuted',text:'Bone shattered into multiple fragments'},
+      {icon:'🌀',bg:'#002b28',title:'Spiral',text:'Twisting force; common in sports injuries'},
+      {icon:'🪴',bg:'#0d2818',title:'Greenstick',text:'Incomplete; common in children'},
+      {icon:'⬇️',bg:'#2d1e00',title:'Compression',text:'Bone crushed; common in osteoporosis'}
+    ]
+  },
+  {
+    type:'steps',
+    eyebrow:'FRACTURES',
+    title:'Clinical <span>Manifestations</span> — The 5 P\'s',
+    alert:{text:'<strong>PRIORITY:</strong> Monitor neurovascular status distal to any fracture. Report any change immediately.'},
+    steps:[
+      {n:'P1',title:'Pain',text:'Due to muscle spasms or tissue damage at the fracture site'},
+      {n:'P2',title:'Paresthesia',text:'Tingling or numbness distal to the fracture — nerve involvement'},
+      {n:'P3',title:'Pallor',text:'Loss of color indicating impaired circulation'},
+      {n:'P4',title:'Pulselessness',text:'Absent or weak distal pulse — vascular emergency'},
+      {n:'P5',title:'Paralysis',text:'Loss of motor function — indicates serious neurovascular compromise'},
+    ]
+  },
+  {
+    type:'two-col',
+    eyebrow:'FRACTURES',
+    title:'Management & <span>Nursing Care</span>',
+    left:{title:'Medical Management',color:'#3b9eff',icon:'🩺',items:['History & physical assessment','Radiography or CT confirmation','Narcotics + anti-inflammatory medications','Closed reduction — non-surgical','Open reduction internal fixation (ORIF)','Traction: skeletal or skin']},
+    right:{title:'Nursing Priorities',color:'#22c55e',icon:'💊',items:['Elevate injured extremity','Ice for first 24–48 hours','Pin care for skeletal traction','Neurovascular checks q1–2h','Client teaching: cast care, symptoms','Monitor for complications: compartment syndrome, VTE, fat embolism']}
+  },
+  {
+    type:'two-col',
+    eyebrow:'CARPAL TUNNEL SYNDROME',
+    title:'Median Nerve <span>Compression</span>',
+    left:{title:'Pathophysiology & Risk',color:'#a78bfa',icon:'🖐️',items:['Most frequent compression neuropathy','Women 4–5× more likely than men','Repetitive wrist motions inflame tendons','Inflammation compresses median nerve','Phalen\'s test: wrist flexion 60 sec','Tinel\'s sign: tapping over carpal tunnel']},
+    right:{title:'Management & Nursing',color:'#fb923c',icon:'🏥',items:['Anti-inflammatory medications (NSAIDs with food)','Wrist splinting — especially at night','Surgery if conservative measures fail','Monitor sensation & neurovascular status','Finger range of motion exercises','Elevate hands to reduce swelling']}
+  },
+  {
+    type:'steps',
+    eyebrow:'LOW BACK PAIN',
+    title:'Assessment & <span>Treatment</span>',
+    alert:{text:'<strong>Note:</strong> Pain may radiate to buttocks/legs (sciatica). Neurological testing helps identify nerve involvement.'},
+    steps:[
+      {n:'1',title:'Acute LBP',text:'NSAIDs, acetaminophen, muscle relaxants, oral steroids; ice/heat application'},
+      {n:'2',title:'Chronic LBP',text:'NSAIDs, opioids (with caution), antidepressants; physical therapy + TENS'},
+      {n:'3',title:'Interventional',text:'Epidural steroid injections, nerve blocks, transcutaneous electrical nerve stimulation'},
+      {n:'4',title:'Surgery',text:'Last resort: discectomy, laminectomy, spinal fusion for structural issues'},
+    ]
+  },
+  {
+    type:'two-col',
+    eyebrow:'OSTEOPOROSIS',
+    title:'Weak Bones & <span>Prevention</span>',
+    left:{title:'Pathophysiology & Assessment',color:'#3b9eff',icon:'🦴',items:['Condition causing decreased bone density','Primary: aging & estrogen loss in women','Secondary: other diseases, medications, hormones','Usually asymptomatic in early stages','Late stages: kyphosis, loss of height, fractures','Dowager\'s hump (thoracic kyphosis)']},
+    right:{title:'Management',color:'#22c55e',icon:'💊',items:['Weight bearing exercises: walking, jogging, tennis','Calcium-rich diet; limit alcohol & smoking','Bisphosphonates: take with full glass of water, stay upright 30–60 min','Calcitonin, alendronate, estrogen replacement','DEXA scan for diagnosis','Avoid jarring exercises for diagnosed patients']}
+  },
+  {
+    type:'icon-grid',
+    eyebrow:'OSTEOMYELITIS',
+    title:'Bone Infection — <span>S. aureus</span>',
+    info:{text:'<strong>S. aureus</strong> bacteria enter through open wounds or bloodstream, colonizing bone tissue. Requires prolonged IV antibiotic therapy (4–6 weeks typically).'},
+    cards:[
+      {icon:'🦠',bg:'#3d1000',title:'Cause',text:'S. aureus enters via open wound or hematogenous spread'},
+      {icon:'🔥',bg:'#2d1e00',title:'S&S',text:'Localized bone pain, warmth, edema, fever, chills'},
+      {icon:'💉',bg:'#0a1f3d',title:'Antibiotics',text:'IV antibiotics 4–6 weeks; culture-guided'},
+      {icon:'🔪',bg:'#1c1040',title:'Surgery',text:'Debridement and sequestrectomy if needed'},
+      {icon:'🩹',bg:'#002b28',title:'Wound Care',text:'Meticulous wound care, dressing changes'},
+      {icon:'📊',bg:'#0d2818',title:'Monitor 6 Ps',text:'Neurovascular checks; infection control'}
+    ]
+  },
+  {
+    type:'two-col',
+    eyebrow:'OSTEOARTHRITIS',
+    title:'Degenerative <span>Joint Disease</span>',
+    left:{title:'Pathophysiology & Assessment',color:'#fb923c',icon:'🦴',items:['Progressive loss of articular cartilage','Weight-bearing joints most affected','Cause often idiopathic; triggers: obesity, aging, trauma','Bone cysts & synovitis in advanced cases','Assess: ADL limitation, pain location, stiffness','Heberden\'s & Bouchard\'s nodes']},
+    right:{title:'Management & Nursing',color:'#a78bfa',icon:'🏥',items:['NSAIDs & acetaminophen for pain','Joint replacement surgery (arthroplasty)','Weight reduction reduces joint load','Exercise program to maintain function','Protect joints: avoid prolonged stress','Client teaching: medication adherence, activity pacing']}
+  },
+  {
+    type:'steps',
+    eyebrow:'ARTHROPLASTY',
+    title:'Total Joint Replacement <span>Nursing Care</span>',
+    alert:{text:'<strong>Post-op priority:</strong> Neurovascular checks q1–4h. Report pallor, increased pain, paresthesia, absent pulse immediately.'},
+    steps:[
+      {n:'Pre',title:'Pre-operative',text:'Baseline neurovascular assessment; patient education on post-op expectations; DVT prophylaxis discussion'},
+      {n:'Post',title:'Post-operative',text:'Correct positioning of hip (avoid adduction/flexion >90°); pain management; early ambulation'},
+      {n:'D/C',title:'Discharge Criteria',text:'Independent transfer; walk 150 ft; negotiate stairs safely; wound assessment'},
+      {n:'Home',title:'Home Teaching',text:'Inspect incision daily; driving at 6–8 weeks; no heavy occupation for 3 months; follow-up appointments'},
+    ]
+  },
+  {
+    type:'two-col',
+    eyebrow:'RHEUMATOID ARTHRITIS',
+    title:'Autoimmune <span>Systemic</span> Disease',
+    left:{title:'Pathophysiology & Stages',color:'#f05252',icon:'🔬',items:['Autoimmune: immune system attacks synovium','Chronic inflammation of joints, tissues, organs','Cause unknown; genetic + environmental triggers','Smoking increases risk significantly','Early: morning stiffness >1hr, bilateral symmetric','Late: nodules, deformity, cardiac/respiratory complications']},
+    right:{title:'Clinical Manifestations',color:'#a78bfa',icon:'⚕️',items:['Fatigue, low-grade fever, lack of appetite','Bilateral symmetric joint swelling & warmth','Ulnar deviation of fingers','Paresthesias in hands & feet (Sjogren syndrome)','ESR elevated; RF elevated; CRP positive','Anti-CCP antibody positive']}
+  },
+  {
+    type:'steps',
+    eyebrow:'RHEUMATOID ARTHRITIS',
+    title:'Therapeutic <span>Management</span>',
+    alert:{text:'<strong>No cure exists.</strong> Goal: relieve pain & inflammation, maintain joint function, minimize systemic involvement, delay progression.'},
+    steps:[
+      {n:'1',title:'NSAIDs',text:'Taken at equal intervals; morning dose with food 30 min before rising. Reduces pain & inflammation.'},
+      {n:'2',title:'DMARDs',text:'Methotrexate: first-line DMARD. Slows disease progression. Monitor LFTs, CBC. Take with food to reduce nausea.'},
+      {n:'3',title:'Biologics (TNF inhibitors)',text:'Etanercept, adalimumab. Screen for TB before starting. Monitor for infection.'},
+      {n:'4',title:'Corticosteroids',text:'Short-term for flares. Taper slowly; do not abruptly discontinue. Monitor blood sugar.'},
+    ]
+  },
+  {
+    type:'icon-grid',
+    eyebrow:'RHEUMATOID ARTHRITIS',
+    title:'RA <span>Complications</span>',
+    cards:[
+      {icon:'🩸',bg:'#3d1000',title:'Vasculitis',text:'Inflammation of blood vessels; can affect organs'},
+      {icon:'❤️',bg:'#2d1000',title:'Cardiac',text:'Pericarditis, myocarditis; increased CVD risk'},
+      {icon:'🫁',bg:'#0a1f3d',title:'Respiratory',text:'Pleuritis, pulmonary fibrosis, Caplan\'s syndrome'},
+      {icon:'👁️',bg:'#002b28',title:'Sjögren\'s',text:'Dry eyes & mouth; burning, itching, discharge'},
+      {icon:'🩺',bg:'#1c1040',title:'Felty\'s',text:'RA + splenomegaly + neutropenia triad'},
+      {icon:'💊',bg:'#2d1e00',title:'Med Side Effects',text:'DMARD toxicity: hepatotoxicity, bone marrow suppression'}
+    ]
+  },
+  {
+    type:'steps',
+    eyebrow:'COMPASSIONATE CARE',
+    title:'Fear of Falling & <span>Psychosocial</span> Support',
+    info:{text:'<strong>Key insight:</strong> Immobility from fear of falling actually <em>increases</em> fall risk by weakening muscles and reducing balance.'},
+    steps:[
+      {n:'1',title:'Listen & Acknowledge',text:'Validate the client\'s fear without dismissing it. Say "That fear makes sense — let\'s address it together."'},
+      {n:'2',title:'Educate on Risk',text:'Explain how limiting activity INCREASES fall likelihood due to muscle deconditioning.'},
+      {n:'3',title:'Focus on Strengths',text:'Remind client of progress. Empower them. Explore what would make home feel safe.'},
+      {n:'4',title:'Practical Safety',text:'Assistive devices, home modifications, emergency communication plan, supervised ambulation practice.'},
+    ]
+  },
+  // RA Case Study
+  {
+    type:'hero',
+    eyebrow:'NGN CASE STUDY · NUR 170/171',
+    title:'Rheumatoid\nArthritis\nExacerbation',
+    sub:'A.J. — 42-year-old female admitted for RA exacerbation. Apply NGN clinical judgment model across three parts.',
+    tags:['Recognize Cues','Prioritize Hypotheses','Take Action','Evaluate Outcomes']
+  },
+  {
+    type:'steps',
+    eyebrow:'CASE STUDY — PART 1',
+    title:'Recognize & <span>Analyze Cues</span>',
+    alert:{text:'<strong>Scenario:</strong> A.J. is a 42-year-old female with intense hand/wrist/knee pain, bilateral symmetric swelling, morning stiffness lasting hours, stopped Methotrexate 1 month ago due to nausea, recent emotional stress, current smoker.'},
+    steps:[
+      {n:'🔍',title:'History Cues',text:'Female, 35–45 age of onset for RA. Emotional stress triggers exacerbation. Smoking = confirmed RA risk factor.'},
+      {n:'🩺',title:'Physical Cues',text:'Morning stiffness >4h (bilateral symmetric). Swollen, warm, tender, bilateral joint inflammation. Ulnar deviation present (late finding).'},
+      {n:'🌡️',title:'Systemic Cues',text:'Low-grade fever + severe fatigue past week (systemic RA manifestations). Stopped DMARD = flare risk.'},
+      {n:'🔬',title:'Lab Cues',text:'ESR elevated, RF elevated, CRP positive — all consistent diagnostic findings for active RA exacerbation.'},
+    ]
+  },
+  {
+    type:'two-col',
+    eyebrow:'CASE STUDY — PART 2',
+    title:'Prioritize & <span>Take Action</span>',
+    left:{title:'Highest Priority Actions',color:'#f05252',icon:'⚡',items:['1. Administer prescribed NSAID medication — pharmacologic management of acute pain & inflammation','3. Apply heat or cold to inflamed joints as ordered — nonpharmacologic comfort measure','These two address the immediate priorities: pain control + comfort']},
+    right:{title:'Why Not the Others?',color:'#7fa8c0',icon:'📋',items:['#2 Exercise education: important but not acute priority','#4 Dietitian referral: supportive but not immediate','#5 Document fatigue: important documentation but does not directly relieve acute exacerbation','Airway & circulation (ABC) then pain management = correct prioritization']}
+  },
+  {
+    type:'icon-grid',
+    eyebrow:'CASE STUDY — PART 3',
+    title:'Long-Term <span>Teaching Plan</span>',
+    info:{text:'Select ALL correct instructions for A.J.\'s self-management teaching plan. Correct answers: A, B, C, D, F.'},
+    cards:[
+      {icon:'✅',bg:'#0a2618',title:'A — Active Exercise',text:'Use active > active-assist > passive exercise whenever possible for best outcomes'},
+      {icon:'✅',bg:'#0a2618',title:'B — Rest Periods',text:'Incorporate rest between activities — severe fatigue is a systemic RA manifestation'},
+      {icon:'✅',bg:'#0a2618',title:'C — Avoid Jarring',text:'Avoid jogging, horseback riding — protect joints from high-impact stress'},
+      {icon:'✅',bg:'#0a2618',title:'D — Good & Bad Days',text:'Exercise consistently on both good AND bad days — consistency is key'},
+      {icon:'❌',bg:'#3d1000',title:'E — STOP Exercise',text:'WRONG: Do not stop completely — reduce repetitions during flares, but continue'},
+      {icon:'✅',bg:'#0a2618',title:'F — PT & OT Referral',text:'Refer to Physical & Occupational Therapy before discharge — essential nonpharmacologic care'}
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════
+//  ESCAPE ROOM DATA
+// ═══════════════════════════════════════════════════
+const ROOMS = [
+{
+  id:'bones', name:'Fractures & Bone Injuries', icon:'🦴', color:'bones',
+  subtitle:'Assessment · Complications · 5 Ps',
+  desc:'Fracture types, clinical manifestations, the 5 Ps, and compartment syndrome.',
+  keyfacts:[
+    '5 Ps: Pain, Paresthesia, Pallor, Pulselessness, Paralysis — monitor after ANY fracture',
+    'Open fractures = high infection risk; sterile dressing, IV antibiotics, ORIF',
+    'Compartment syndrome: tight cast/dressing → rising pressure → neurovascular compromise',
+    'Fat embolism: petechiae, confusion, hypoxia — within 12–72h of long bone fracture',
+    'VTE (DVT/PE) is a major post-fracture complication; anticoagulation prophylaxis key',
+    'Traction: never remove weights; maintain alignment; pin care with skeletal traction'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     scenario:'A patient with a tibial fracture and cast reports increasing pain unrelieved by opioids, along with numbness in the toes. The cast was applied 8 hours ago.',
+     q:'Which complication is MOST likely and what is the PRIORITY nursing action?',
+     opts:['Muscle spasm — administer additional analgesic and reassess in 1 hour.',
+           'Compartment syndrome — notify provider STAT, prepare for cast bivalving or fasciotomy, monitor 5 Ps continuously.',
+           'DVT — apply warm compresses and elevate the leg above heart level.',
+           'Infection — apply ice and administer antibiotics.'],
+     ans:1,
+     explain:'Increasing pain unresponsive to opioids + paresthesia within a cast = compartment syndrome until proven otherwise. PRIORITY: notify provider IMMEDIATELY. Do NOT elevate above heart (reduces arterial inflow further). Anticipate bivalving the cast or surgical fasciotomy. Time is tissue — delay causes permanent nerve/muscle damage.'},
+    {type:'mc',pts:20,
+     q:'A patient had a femur fracture 18 hours ago. The nurse notes petechiae on the chest, confusion, and SpO2 88% on room air. What is the MOST likely complication?',
+     opts:['Deep vein thrombosis (DVT) — begin anticoagulation immediately.',
+           'Pulmonary embolism from a peripheral DVT.',
+           'Fat embolism syndrome — hallmark triad: hypoxia, confusion, petechiae on upper chest/axillae.',
+           'Hospital-acquired pneumonia from immobility.'],
+     ans:2,
+     explain:'Fat embolism syndrome occurs within 12–72 hours of long bone or pelvic fracture. Classic triad: hypoxia (SpO2 drop), neurological changes (confusion), and petechiae on upper chest/axillae. Priority: supplemental O2, notify provider STAT, anticipate corticosteroids and supportive care. Distinguish from PE (no petechiae in PE).'},
+    {type:'mc',pts:20,
+     q:'Which of the following client teachings is MOST important for a patient discharged home with a long arm cast?',
+     opts:["Avoid getting the cast wet and report any odor, drainage, or skin breakdown under the cast.",
+           'You may insert a pencil under the cast to scratch if it itches.',
+           'Elevate the cast only for the first 24 hours after application.',
+           'The cast can be removed at home when pain resolves.'],
+     ans:0,
+     explain:'Key cast care teachings: keep dry, no objects inserted (causes pressure sores and infection), report odor/drainage/new pain (infection/breakdown), elevate for 24–48h to reduce swelling, report numbness/tingling. NEVER insert objects under the cast — a leading cause of pressure wounds in cast patients.'},
+    {type:'mc',pts:20,
+     q:'A patient with skeletal traction refuses to allow the nurse to perform pin site care, stating they have had no problems. What is the BEST response?',
+     opts:["Document the refusal and return tomorrow.",
+           "Perform pin care while the patient is sleeping to prevent complications.",
+           "Explain that pin sites are direct pathways to the bone — infection can cause osteomyelitis. Pin care is performed per protocol (typically every 8–12h) to prevent serious bone infection.",
+           "Notify the family that the patient is non-compliant."],
+     ans:2,
+     explain:'Skeletal pin sites are direct portals to bone. Without consistent pin care (typically cleaning with half-strength hydrogen peroxide or normal saline per protocol), bacteria can travel the pin track to the bone, causing osteomyelitis. Patient education should explain the serious consequence, not simply enforce compliance.'},
+    {type:'dosage',pts:30,
+     scenario:'Post-operative hip ORIF. Patient: 78 kg. Order: Enoxaparin (Lovenox) 0.5 mg/kg subcutaneous every 12 hours for VTE prophylaxis. Available: Enoxaparin 100 mg/mL pre-filled syringes.',
+     q:'How many mg per dose should be administered?',
+     formula:'Dose (mg) = dose rate × body weight\n           = 0.5 mg/kg × 78 kg',
+     unit:'mg per dose',ans:39,tolerance:0,
+     explain:'0.5 × 78 = 39 mg per dose. Sub-Q injection into abdomen, alternating sides. Do NOT expel air bubble before injection. Do NOT aspirate. Apply gentle pressure after — do NOT rub (increases bruising). Monitor anti-Xa levels if ordered. Note: standard VTE prophylaxis for most adults is 40 mg SC daily; weight-based dosing used for therapeutic anticoagulation. Always verify protocol.'}
+  ]
+},
+{
+  id:'joints', name:'Arthritis & Joint Disease', icon:'🦿', color:'joints',
+  subtitle:'OA · RA · Arthroplasty',
+  desc:'Osteoarthritis vs. rheumatoid arthritis, surgical management, and joint protection.',
+  keyfacts:[
+    'OA = degenerative (wear & tear); RA = autoimmune (immune attacks synovium)',
+    'OA: affects weight-bearing joints; RA: bilateral symmetric small joints first',
+    'RA morning stiffness >1 hour = key distinguishing feature from OA',
+    'Post-hip arthroplasty: avoid hip flexion >90°, adduction, internal rotation',
+    'DMARDs (metformin) are disease-modifying — must be taken consistently, not just for flares',
+    'Discharge criteria after arthroplasty: independent transfer, walk 150 ft, negotiate stairs'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     scenario:'A patient recovering from total hip replacement 1 day post-op calls out saying they need to use the bedpan. The nurse notes the patient is trying to bend their hip to >90°.',
+     q:'What is the PRIORITY nursing intervention?',
+     opts:["Allow the patient to position themselves as comfortable as possible.",
+           "Assist the patient to a position that keeps hip flexion below 90° and provide the bedpan or fracture pan; educate on hip precautions immediately.",
+           "Provide a raised toilet seat and assist to the bathroom.",
+           "Place a pillow between the patient's legs and call the surgeon."],
+     ans:1,
+     explain:'Post-hip arthroplasty hip precautions: avoid flexion >90°, no adduction past midline, avoid internal rotation. Violating these precautions risks prosthetic dislocation. Use a fracture bedpan (allows supine use without flexion). Educate immediately — this is a common cause of early arthroplasty failure.'},
+    {type:'mc',pts:20,
+     q:'Which clinical finding BEST distinguishes Rheumatoid Arthritis from Osteoarthritis?',
+     opts:['Pain in weight-bearing joints that worsens with activity.',
+           'Bilateral symmetric joint involvement, morning stiffness >1 hour, systemic symptoms (fatigue, fever), positive rheumatoid factor.',
+           'Gradual onset of joint degeneration in patients over 60.',
+           'Heberden\'s nodes on DIP joints of the fingers.'],
+     ans:1,
+     explain:'RA hallmarks: bilateral symmetric involvement (esp. MCP, PIP joints), morning stiffness lasting >1 hour (OA stiffness resolves in <30 min), systemic symptoms (fatigue, low-grade fever, weight loss), and positive serological markers (RF, anti-CCP). OA features: weight-bearing joint pain, worsens with activity, improves with rest, Heberden\'s/Bouchard\'s nodes, no systemic involvement.'},
+    {type:'mc',pts:20,
+     scenario:'A patient with RA is prescribed methotrexate (MTX) weekly. She reports her symptoms are better and asks if she can skip doses when she feels well.',
+     q:'What is the MOST accurate nursing response?',
+     opts:["Yes — you can take methotrexate as needed when symptoms return.",
+           "Methotrexate is a disease-modifying antirheumatic drug (DMARD) that works by suppressing the underlying immune process. It must be taken consistently on a set schedule to prevent disease progression, even when you feel well.",
+           "Methotrexate can be stopped without risk once symptoms improve.",
+           "Skipping doses is fine as long as you take folic acid supplements."],
+     ans:1,
+     explain:'DMARDs like methotrexate work by suppressing underlying immune activity, not just symptoms. They must be taken on a consistent schedule (weekly for MTX). Stopping during remission allows the immune process to restart. Patients also need folic acid supplementation to reduce MTX side effects, regular LFT and CBC monitoring, and should avoid alcohol.'},
+    {type:'mc',pts:20,
+     q:'Which assessment finding after total knee replacement (TKR) requires IMMEDIATE notification of the surgeon?',
+     opts:['Mild redness along the incision line at 48 hours post-op.',
+           'Pain rated 4/10, well-controlled with oral analgesics.',
+           'Sudden severe calf pain, warmth, redness, and a positive Homan\'s sign at day 3 post-op.',
+           'Small amount of serous drainage on dressing at 24 hours.'],
+     ans:2,
+     explain:'Calf pain + warmth + redness post-arthroplasty = DVT until proven otherwise. This is an emergency — Homan\'s sign is an unreliable test but combined with other signs warrants immediate notification. Anticipate: Doppler ultrasound, anticoagulation. DVT can propagate to PE (life-threatening). Do NOT massage the calf.'},
+    {type:'dosage',pts:30,
+     scenario:'Patient post-TKR (78 kg) reporting pain 7/10. Order: Ketorolac (Toradol) 0.5 mg/kg IV q6h PRN pain. Maximum single dose: 30 mg. Available: Ketorolac 30 mg/mL vial.',
+     q:'How many mg should be administered for this dose?',
+     formula:'Calculated dose = 0.5 mg/kg × 78 kg = ? mg\nApply max single-dose cap: max = 30 mg\nAdminister the LOWER of calculated or max',
+     unit:'mg',ans:30,tolerance:0,
+     explain:'0.5 × 78 = 39 mg calculated. BUT max single dose = 30 mg. Administer 30 mg (the lower of calculated or maximum). Ketorolac: max 5 days total; watch for GI bleeding and renal impairment; use with caution in patients with kidney disease. Volume to draw: 30 mg ÷ 30 mg/mL = 1 mL. Two-nurse verification for IV push medications per policy.'}
+  ]
+},
+{
+  id:'spine', name:'Low Back Pain & Osteoporosis', icon:'🦷', color:'spine',
+  subtitle:'Spinal Conditions · Bone Density',
+  desc:'Low back pain treatment ladder, osteoporosis pathophysiology, bisphosphonate teaching.',
+  keyfacts:[
+    'Acute LBP: NSAIDs, acetaminophen, muscle relaxants, short-term steroids',
+    'Chronic LBP: NSAIDs, cautious opioids, antidepressants, TENS, physical therapy',
+    'Bisphosphonates: take with full glass of water; remain UPRIGHT 30–60 min (prevent reflux/esophageal ulceration)',
+    'Osteoporosis usually asymptomatic until fracture — DEXA scan is the gold standard diagnostic',
+    'Weight-bearing exercises (walking, dancing) stimulate osteoblasts — best lifestyle intervention',
+    'Calcium 1200 mg/day + Vitamin D 800–1000 IU/day recommended for postmenopausal women'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     q:'A patient with chronic osteoporosis asks why she should take her alendronate (Fosamax) first thing in the morning on an empty stomach while standing. What is the BEST explanation?',
+     opts:["Alendronate absorbs better in the morning on a full stomach.",
+           "Alendronate can irritate the esophagus and must be taken with a full glass of water and the patient must stay upright for 30–60 minutes to prevent esophageal reflux and potential ulceration.",
+           "Staying upright ensures the medication reaches the stomach faster.",
+           "Alendronate interacts with food by reducing calcium absorption from the meal."],
+     ans:1,
+     explain:'Bisphosphonates (alendronate, risedronate) must be taken with 6–8 oz plain water only — no coffee, juice, or food. Patient must remain upright (sitting, standing, walking) for 30–60 minutes afterward to prevent gastroesophageal reflux of this highly caustic drug. GERD or esophageal disorders are contraindications.'},
+    {type:'mc',pts:20,
+     scenario:'A 68-year-old patient with osteoporosis reports acute severe back pain after bending over to pick up groceries. No fall occurred.',
+     q:'What type of fracture is MOST likely and what is the nursing priority?',
+     opts:["Stress fracture of the femur — immobilize and call orthopedics.",
+           "Vertebral compression fracture — common in osteoporosis; priority: pain management, log-roll technique for positioning, assess neurological function, notify provider.",
+           "Muscle strain — RICE therapy and muscle relaxants.",
+           "Herniated disc — bed rest and oral steroids."],
+     ans:1,
+     explain:'Vertebral compression fractures occur in osteoporotic patients with minimal trauma (bending, lifting). The fractured vertebra collapses. Nursing priority: assess neurological function (bowel/bladder, sensation, motor), pain management, log-roll for repositioning (spinal alignment), notification of provider. Kyphosis (Dowager\'s hump) results from multiple compression fractures.'},
+    {type:'mc',pts:20,
+     q:'Which exercise is MOST beneficial for a patient with osteoporosis to increase bone density?',
+     opts:["Swimming or water aerobics — best cardio with no fracture risk.",
+           "Weight-bearing exercises such as walking, dancing, or light jogging — these stimulate osteoblast activity and increase bone density.",
+           "Complete bed rest to prevent fractures.",
+           "Passive range-of-motion exercises performed by a physical therapist."],
+     ans:1,
+     explain:'Weight-bearing exercises (feet and legs support body weight against gravity) stimulate osteoblast activity, increasing bone formation and density. Walking is the most accessible and safest option. Swimming and water aerobics are excellent cardiovascular exercise but are NOT weight-bearing — they do not provide the mechanical stimulus for bone remodeling that gravity-dependent exercise does.'},
+    {type:'mc',pts:20,
+     q:'A patient with acute low back pain is prescribed cyclobenzaprine (Flexeril), a muscle relaxant. Which adverse effect requires the most urgent nursing assessment?',
+     opts:["Mild dry mouth — encourage increased fluid intake.",
+           "Excessive sedation and CNS depression — assess for drowsiness, confusion, impaired coordination, especially in elderly patients or those taking other CNS depressants.",
+           "Increased appetite and mild weight gain.",
+           "Mild constipation — recommend increased fiber intake."],
+     ans:1,
+     explain:'Cyclobenzaprine causes significant CNS depression (sedation, confusion, impaired coordination). Risk of falls and respiratory depression increases when combined with opioids, benzodiazepines, or alcohol. Elderly patients are particularly vulnerable. Assess mental status baseline and after each dose. Instruct patients not to drive or operate machinery. Short-term use only (2–3 weeks maximum).'},
+    {type:'dosage',pts:30,
+     scenario:'Patient: 55 kg, chronic low back pain with RA. Order: Prednisone (oral corticosteroid) 0.3 mg/kg/day PO in the morning for 7-day taper. Available: Prednisone 10 mg tablets.',
+     q:'How many tablets should be given for the first day\'s dose?',
+     formula:'Dose (mg) = 0.3 mg/kg × 55 kg\nTablets = dose ÷ 10 mg/tablet',
+     unit:'tablets',ans:1.65,tolerance:0.05,
+     explain:'0.3 × 55 = 16.5 mg. 16.5 ÷ 10 = 1.65 tablets. Practically round to 1.5 tablets (15 mg) or 2 tablets (20 mg) — clarify exact rounding with provider. Prednisone: take in the MORNING with food (mimics cortisol rhythm, reduces insomnia and GI effects). Never stop abruptly — taper dose to prevent adrenal insufficiency. Monitor blood glucose (steroids cause hyperglycemia).'}
+  ]
+},
+{
+  id:'auto', name:'Osteomyelitis & Infection', icon:'🦠', color:'auto',
+  subtitle:'Bone Infection · IV Antibiotics · Wound Care',
+  desc:'Osteomyelitis pathophysiology, IV antibiotic management, wound care, and infection control.',
+  keyfacts:[
+    'S. aureus is the most common causative organism; enter via open wounds or hematogenous spread',
+    'Signs: localized bone pain, tenderness, warmth, edema, fever, chills, elevated WBC/CRP/ESR',
+    'Draining sinus tract = chronic osteomyelitis indicator',
+    'Treatment: 4–6 weeks IV antibiotics (culture-guided); surgery (debridement/sequestrectomy) if needed',
+    'Monitor 6 Ps neurovascular checks every 1–2 hours for the affected extremity',
+    'Infection control: standard precautions, wound care technique, contact precautions if MRSA'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     scenario:'The nurse is caring for a client with chronic osteomyelitis of the tibia. Which FIVE findings should be monitored as indicators of potential complications?',
+     q:'Select the five assessment findings that indicate potential complications of osteomyelitis (NGN-style):',
+     opts:['Persistent localized bone pain and tenderness',
+           'Elevated WBC and C-reactive protein',
+           'Draining sinus tract near the affected area',
+           'Decreased capillary refill distal to the extremity',
+           'Sudden decrease in serum calcium',
+           'Fever and chills despite ongoing antibiotic therapy'],
+     type:'sata',
+     correctSet:[0,1,2,3,5],
+     explain:'Options 1–4 and 6 are correct. (1) Bone pain = active infection; (2) Elevated WBC/CRP = systemic inflammation; (3) Draining sinus = chronic osteomyelitis; (4) Decreased capillary refill = neurovascular compromise/compartment syndrome; (6) Fever despite antibiotics = treatment failure/resistant organism. Option 5 (sudden calcium drop) is NOT a direct complication of osteomyelitis — calcium is unrelated.'},
+    {type:'mc',pts:20,
+     q:'A patient with osteomyelitis is receiving vancomycin IV. Which nursing assessment is MOST critical before each dose?',
+     opts:["Check the patient's pain level and administer analgesics as needed.",
+           "Assess serum creatinine and BUN (renal function) before each dose — vancomycin is nephrotoxic and renally cleared. Monitor trough levels as ordered.",
+           "Take the patient's temperature to assess response to treatment.",
+           "Assess the IV site for redness before administration."],
+     ans:1,
+     explain:'Vancomycin is nephrotoxic and ototoxic. It is renally cleared — accumulation in renal impairment causes toxicity. Critical monitoring: serum creatinine/BUN before dosing, trough levels (drawn 30 min before dose; target 10–20 mcg/mL for serious infections), urine output, and signs of ototoxicity (tinnitus, hearing changes). Also monitor for Red Man Syndrome (infuse over minimum 60 min).'},
+    {type:'mc',pts:20,
+     scenario:'A patient with osteomyelitis has a wound with a sinus tract. During dressing change, the nurse notes foul-smelling purulent drainage increasing from yesterday.',
+     q:'What is the PRIORITY nursing action?',
+     opts:["Continue with the dressing change using sterile technique; reassess again tomorrow.",
+           "Document findings, notify the provider immediately, collect a wound culture (aerobic and anaerobic) before changing the dressing, and isolate with contact precautions pending MRSA results.",
+           "Irrigate the wound vigorously with hydrogen peroxide to clean the sinus tract.",
+           "Increase the frequency of dressing changes to every 2 hours."],
+     ans:1,
+     explain:'Increased purulent, foul-smelling drainage suggests treatment failure, resistant organism (MRSA), or spreading infection. PRIORITY: (1) Document & photograph, (2) Notify provider, (3) Culture the wound BEFORE changing the dressing (fresh drainage most accurate for culture), (4) Contact precautions until MRSA ruled out, (5) Review antibiotic regimen. Hydrogen peroxide damages healing tissue — avoid.'},
+    {type:'mc',pts:20,
+     q:'A patient with osteomyelitis asks why they must continue IV antibiotics for 6 weeks when they are "feeling much better" after 2 weeks. What is the BEST response?',
+     opts:["You\'re right — if you feel better, we can discuss stopping early with your doctor.",
+           "Bone tissue has poor blood supply, making it difficult for antibiotics to penetrate in high enough concentrations. A full 4–6 week course ensures the bacteria are completely eradicated and prevents relapse, which is much harder to treat.",
+           "The antibiotics are also preventing other infections, not just the bone infection.",
+           "Six weeks is hospital policy — there is no medical reason."],
+     ans:1,
+     explain:'Bone has poor vascularity — antibiotics penetrate slowly and at lower concentrations than in soft tissue. Premature antibiotic discontinuation is the most common cause of chronic osteomyelitis relapse, which is extremely difficult to treat and may require surgical debridement. Patient education on adherence and the reason for extended treatment improves compliance.'},
+    {type:'dosage',pts:30,
+     scenario:'Patient: 70 kg with osteomyelitis. Order: Vancomycin 15 mg/kg IV every 12 hours. Available: Vancomycin 1000 mg/200 mL (5 mg/mL) piggyback. Infuse over 60 minutes.',
+     q:'What is the dose in mg AND what is the infusion rate in mL/hr?',
+     formula:'Dose (mg)     = 15 mg/kg × 70 kg\nVolume (mL)   = dose ÷ concentration\nRate (mL/hr)  = volume ÷ time (hr)',
+     unit:'mg (enter dose only)',ans:1050,tolerance:0,
+     explain:'Dose = 15 × 70 = 1050 mg. Volume at 5 mg/mL: 1050 ÷ 5 = 210 mL. Rate = 210 mL ÷ 1 hr = 210 mL/hr. In clinical practice, you would request a 1000 mg or 1250 mg bag and confirm with pharmacy — exact 1050 mg may require a custom preparation. CRITICAL: Infuse vancomycin over MINIMUM 60 minutes to prevent Red Man Syndrome (flushing, hypotension, tachycardia from histamine release — not an allergy).'}
+  ]
+},
+{
+  id:'meds', name:'Medications & Pharmacology', icon:'💊', color:'meds',
+  subtitle:'NSAIDs · DMARDs · Bisphosphonates · Biologics',
+  desc:'Pharmacology of musculoskeletal medications, teaching, side effects, and nursing implications.',
+  keyfacts:[
+    'NSAIDs: take with food; avoid in renal impairment, peptic ulcer disease; monitor GI bleeding',
+    'Methotrexate (DMARD): weekly dose, take folic acid, monitor LFTs/CBC, avoid alcohol, avoid pregnancy',
+    'Bisphosphonates: water only, upright 30–60 min, dental exam before starting (osteonecrosis of jaw risk)',
+    'Biologics (TNF inhibitors): screen for TB before starting; live vaccines contraindicated; infection risk',
+    'Corticosteroids: take with food, taper slowly, monitor BGL and BP, moon face/weight gain',
+    'Muscle relaxants: sedation, falls risk, no alcohol, short-term use only'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     scenario:'A patient with RA has been on methotrexate for 6 months. Routine labs show ALT 3× the upper limit of normal.',
+     q:'What is the PRIORITY nursing action?',
+     opts:["Continue methotrexate — mild liver elevation is expected.",
+           "Hold methotrexate, notify the provider immediately, assess for signs of hepatotoxicity (jaundice, RUQ pain, nausea, dark urine), review alcohol use, and anticipate possible dose reduction or discontinuation.",
+           "Advise the patient to take methotrexate with food to reduce liver effects.",
+           "Obtain a repeat LFT in 3 months before taking any action."],
+     ans:1,
+     explain:'Methotrexate is hepatotoxic — elevated LFTs are a serious adverse effect. ALT 3× upper limit = significant hepatotoxicity; hold the medication and notify provider STAT. Regular monitoring: CBC (bone marrow suppression) and LFTs every 4–8 weeks. Patients must avoid alcohol (additive hepatotoxicity) and report jaundice, dark urine, or abdominal pain. Folic acid 1 mg daily reduces side effects.'},
+    {type:'mc',pts:20,
+     q:'A patient is about to start etanercept (Enbrel), a biologic TNF inhibitor, for RA. Which nursing action is REQUIRED before administration?',
+     opts:["Administer a live attenuated influenza vaccine to boost immunity.",
+           "Screen for latent tuberculosis (TB) with a tuberculin skin test (TST) or IGRA test — TNF inhibitors increase risk of TB reactivation.",
+           "Obtain a bone density scan before beginning biologic therapy.",
+           "Ensure the patient has been on methotrexate for at least 2 years first."],
+     ans:1,
+     explain:'TNF inhibitors (etanercept, adalimumab, infliximab) suppress tumor necrosis factor, which is critical for containing latent TB. Reactivation of latent TB is a serious, potentially fatal complication. MANDATORY: Screen for latent TB (TST or IGRA) before starting. Also screen for hepatitis B and C. Live vaccines (MMR, varicella) are CONTRAINDICATED while on biologics. Killed/inactivated vaccines are acceptable.'},
+    {type:'mc',pts:20,
+     q:'A patient taking ibuprofen 800 mg TID for osteoarthritis reports coffee-ground emesis. What is the PRIORITY nursing action?',
+     opts:["Advise the patient to take ibuprofen with food and the symptoms will resolve.",
+           "Recognize coffee-ground emesis as a sign of upper GI bleeding — this is an emergency. Hold ibuprofen, notify provider STAT, assess hemodynamic stability (BP, HR), prepare for IV access and possible endoscopy.",
+           "Switch to acetaminophen and monitor for 24 hours.",
+           "Administer a proton pump inhibitor and reassess in 2 hours."],
+     ans:1,
+     explain:'Coffee-ground emesis = digested blood = UPPER GI BLEEDING EMERGENCY. NSAIDs inhibit COX-1 → reduce prostaglandin-mediated gastric mucosal protection → peptic ulcer → hemorrhage. This is a medical emergency: NPO, large-bore IV access, fluid resuscitation, CBC/INR/type & screen, notify provider, prepare for emergency endoscopy. NSAID is permanently discontinued — patient needs alternative (acetaminophen, topical NSAIDs, or COX-2 selective inhibitor).'},
+    {type:'mc',pts:20,
+     q:'Which instruction is MOST important when educating a patient newly prescribed prednisone for an RA flare?',
+     opts:["You may stop taking prednisone as soon as your symptoms improve.",
+           "Take prednisone in the morning with food. Never stop it abruptly — doses must be tapered gradually to allow your adrenal glands to resume normal cortisol production.",
+           "Take prednisone at bedtime to avoid daytime side effects.",
+           "Take double the dose if you miss a dose the previous day."],
+     ans:1,
+     explain:'Corticosteroids suppress the HPA axis. Abrupt discontinuation causes adrenal insufficiency crisis (hypotension, weakness, nausea, hypoglycemia). Must taper. Morning dosing: mimics the body\'s natural cortisol rhythm (reduces insomnia, mood effects). Take with food (reduces GI irritation). Monitor: blood glucose (steroid-induced hyperglycemia), blood pressure, weight gain, mood changes. Calcium/Vitamin D supplementation with long-term use.'},
+    {type:'dosage',pts:30,
+     scenario:'Patient: 62 kg, acute RA flare. Order: Methylprednisolone (Solu-Medrol) 1 mg/kg IV push over 10 minutes. Available: Methylprednisolone 125 mg/2 mL vial.',
+     q:'How many mL should be administered?',
+     formula:'Dose (mg)    = 1 mg/kg × 62 kg\nVolume (mL)  = dose ÷ concentration\n             = dose ÷ (125 mg ÷ 2 mL)',
+     unit:'mL',ans:0.99,tolerance:0.05,
+     explain:'Dose = 1 × 62 = 62 mg. Concentration = 125 mg/2 mL = 62.5 mg/mL. Volume = 62 ÷ 62.5 = 0.99 mL (approximately 1 mL). Administer IV push over minimum 10 minutes (rapid push causes cardiac arrhythmia). Monitor: BGL (especially in diabetic patients), BP, fluid retention. Document lot number and expiration per high-alert medication policy.'}
+  ]
+},
+{
+  id:'dosage', name:'Weight-Based Calculations', icon:'⚖️', color:'dosage',
+  subtitle:'Advanced Clinical Math',
+  desc:'Complex weight-based dosing, infusion rates, drip calculations, and dose adjustments.',
+  keyfacts:[
+    'Always confirm weight in kg — convert lbs ÷ 2.2',
+    'Apply maximum dose caps BEFORE drawing up — never exceed safe single dose',
+    'IV infusion rate (mL/hr) = total volume ÷ time (hours)',
+    'Two-nurse verification required for all IV push opioids and high-alert medications',
+    'Renal impairment reduces clearance — dose adjustments needed for renally-cleared drugs',
+    'Document: weight source, date weighed, calculation method, verification nurse'
+  ],
+  questions:[
+    {type:'dosage',pts:30,
+     scenario:'Post-op patient: 95 kg, post-tibial ORIF. Order: Morphine sulfate 0.1 mg/kg IV q4h PRN pain 7–10/10. Maximum single dose: 8 mg. Available: Morphine 4 mg/mL vial.',
+     q:'How many mL should be administered per dose?',
+     formula:'Step 1: Calc dose = 0.1 mg/kg × 95 kg\nStep 2: Apply max cap (8 mg max)\nStep 3: Volume = dose ÷ 4 mg/mL',
+     unit:'mL',ans:2,tolerance:0,
+     explain:'Calc dose = 0.1 × 95 = 9.5 mg. Exceeds max (8 mg) → administer 8 mg. Volume = 8 ÷ 4 mg/mL = 2 mL. Two-nurse verification for IV opioids. Assess pain, respiratory rate (min 10/min before giving), sedation level (use CPOT scale if unable to verbalize). Have naloxone available. Document: assessment, dose, route, site, patient response.'},
+    {type:'dosage',pts:30,
+     scenario:'Patient: 68 kg, osteomyelitis on long-term antibiotics. Order: Gentamicin 3 mg/kg/day IV divided every 8 hours (q8h = 3 doses per day). Available: Gentamicin 40 mg/mL vial.',
+     q:'How many mL per individual dose (q8h)?',
+     formula:'Total daily dose = 3 mg/kg × 68 kg = ? mg\nPer dose (q8h)  = daily dose ÷ 3\nVolume (mL)     = per dose ÷ 40 mg/mL',
+     unit:'mL per dose',ans:1.7,tolerance:0.05,
+     explain:'Daily = 3 × 68 = 204 mg/day. Per dose = 204 ÷ 3 = 68 mg. Volume = 68 ÷ 40 = 1.7 mL per dose. Gentamicin is nephrotoxic AND ototoxic. Monitor: BUN/creatinine, peak (30 min after infusion end) and trough (30 min before next dose) levels. Trough goal <2 mcg/mL. Report tinnitus, hearing changes, dizziness — signs of ototoxicity.'},
+    {type:'dosage',pts:30,
+     scenario:'RA patient: 55 kg, starting methotrexate. Order: Methotrexate 7.5 mg PO weekly. Next dose titration: increase to 0.2 mg/kg weekly. Available: Methotrexate 2.5 mg tablets.',
+     q:'How many tablets at the TITRATED dose (0.2 mg/kg)?',
+     formula:'Dose = 0.2 mg/kg × 55 kg = ? mg\nTablets = dose ÷ 2.5 mg/tablet',
+     unit:'tablets',ans:4.4,tolerance:0.1,
+     explain:'0.2 × 55 = 11 mg. 11 ÷ 2.5 = 4.4 tablets. Practically: 4 tablets (10 mg) — round down and verify with provider. MTX is a teratogen (Category X) — ensure female patients have negative pregnancy test before each dose and use reliable contraception. Weekly (not daily!) dosing. Folic acid 1 mg daily. Avoid aspirin and NSAIDs when possible (can increase MTX toxicity).'},
+    {type:'dosage',pts:30,
+     scenario:'Pediatric patient: 30 kg, post-femur fracture. Order: Acetaminophen 15 mg/kg PO q6h PRN pain. Max single dose: 500 mg. Available: Acetaminophen 160 mg/5 mL suspension.',
+     q:'How many mL per dose?',
+     formula:'Dose = 15 mg/kg × 30 kg (check vs. 500 mg max)\nVolume = dose ÷ concentration (160 mg/5 mL = 32 mg/mL)',
+     unit:'mL',ans:14.06,tolerance:0.2,
+     explain:'Dose = 15 × 30 = 450 mg. Under 500 mg max — give 450 mg. Volume = 450 ÷ 32 mg/mL = 14.06 mL (≈ 14 mL). Pediatric dosing: ALWAYS weight-based; ALWAYS check max dose; ALWAYS use oral syringe (not household spoon). Acetaminophen max daily dose for children: 75 mg/kg/day not to exceed 4 g/day. Check all other medications for acetaminophen content (combination products).'},
+    {type:'dosage',pts:30,
+     scenario:'Patient: 80 kg, post-spinal fusion. Continuous morphine PCA pump. Order: Morphine PCA — bolus dose 0.02 mg/kg per demand, 10-minute lockout, 4-hour limit 0.4 mg/kg total. Available: Morphine 1 mg/mL in 30 mL PCA syringe.',
+     q:'What is the bolus dose in mg AND the 4-hour limit in mg?',
+     formula:'Bolus dose    = 0.02 mg/kg × 80 kg\n4-hour limit  = 0.4 mg/kg × 80 kg',
+     unit:'mg bolus (enter bolus only)',ans:1.6,tolerance:0,
+     explain:'Bolus = 0.02 × 80 = 1.6 mg. 4-hour limit = 0.4 × 80 = 32 mg. Program PCA: bolus 1.6 mg (1.6 mL), lockout 10 min, 4-hr max 32 mg (32 mL). PCA safety: nurse programs the pump (two-nurse check); patient controls demands; nurse does NOT press the button for the patient (defeats safety mechanism); assess Q2H: pain score, sedation, respiratory rate, nausea, NCA (nurse-controlled analgesia) entries.'}
+  ]
+},
+{
+  id:'casestudy', name:'RA NGN Case Study', icon:'📋', color:'casestudy',
+  subtitle:'A.J. — Acute Exacerbation · NGN Clinical Judgment',
+  desc:'Apply the NGN Clinical Judgment Model to A.J.\'s RA exacerbation: recognize cues, prioritize, and evaluate outcomes.',
+  keyfacts:[
+    'NGN model: Recognize Cues → Analyze Cues → Prioritize Hypotheses → Generate Solutions → Take Action → Evaluate Outcomes',
+    'RA exacerbation triggers: infection, emotional stress, stopping DMARDs, smoking',
+    'Highest priority in acute flare: pain management (NSAID) + nonpharmacologic comfort (heat/cold)',
+    'Long-term RA management: active exercise, rest periods, avoid jarring exercises, consistent DMARD adherence',
+    'Physical and Occupational Therapy referrals are essential before discharge',
+    'Methotrexate: weekly dosing, folic acid supplementation, monitor LFTs/CBC, no alcohol'
+  ],
+  questions:[
+    {type:'mc',pts:20,
+     scenario:'A.J. is a 42-year-old female admitted with RA exacerbation. She stopped methotrexate 1 month ago due to nausea, reports emotional stress, and smokes. Joints are bilaterally swollen, warm, and tender. Morning stiffness lasts 4 hours.',
+     q:'Which assessment finding is MOST characteristic of Rheumatoid Arthritis (vs. Osteoarthritis)?',
+     opts:['Joint pain that worsens with activity and improves with rest.',
+           'Bilateral symmetric joint involvement with morning stiffness lasting >1 hour, systemic symptoms, and positive RF/anti-CCP antibodies.',
+           'Heberden\'s nodes on the distal interphalangeal joints.',
+           'Single joint involvement following a recent injury.'],
+     ans:1,
+     explain:'Bilateral symmetric involvement + morning stiffness >1 hour + systemic symptoms (fever, fatigue) + positive RF/anti-CCP = classic RA. OA: unilateral or bilateral but not symmetric, stiffness <30 min, worsens with activity, no systemic symptoms, Heberden\'s/Bouchard\'s nodes, negative RF. A.J.\'s 4-hour morning stiffness is a hallmark distinguishing feature.'},
+    {type:'mc',pts:20,
+     scenario:'A.J. is in severe pain (8/10). The provider orders: (1) Ibuprofen 400 mg PO q6h with food, (2) Warm packs to bilateral hands and knees, (3) CBC, ESR, CRP, RF labs.',
+     q:'Which TWO actions are the HIGHEST PRIORITY in managing A.J.\'s acute exacerbation?',
+     opts:['Administer ibuprofen 400 mg PO — first-line pharmacologic management of RA pain and inflammation.',
+           'Draw the ordered labs — results needed before any other action.',
+           'Apply warm packs to inflamed joints — nonpharmacologic comfort measure for pain.',
+           'Educate on dietary modifications for RA.',
+           'Contact dietary for a low-sodium meal plan.'],
+     type:'sata',
+     correctSet:[0,2],
+     explain:'Priority 1: Administer NSAIDs — pharmacologic management of acute pain/inflammation is a primary nursing goal. Priority 2: Apply heat/cold — nonpharmacologic comfort. Labs can be collected concurrently but do NOT delay pain management waiting for results. Diet education is important but not the acute priority. The question mirrors the original case study priorities.'},
+    {type:'mc',pts:20,
+     scenario:'A.J. admits she stopped methotrexate because of nausea. She asks if she really needs it since "it\'s not like insulin — I can skip it."',
+     q:'What is the MOST accurate and therapeutic nursing response?',
+     opts:["You\'re right — you can take a break from it when you feel well.",
+           "Methotrexate is a disease-modifying drug that slows RA progression by suppressing the immune process attacking your joints. Stopping it allowed the disease to flare. Let\'s talk about strategies for managing the nausea so you can stay on it consistently.",
+           "You should not question your doctor\'s orders.",
+           "The nausea is just a minor side effect — push through it."],
+     ans:1,
+     explain:'Therapeutic response: acknowledge the patient\'s concern (nausea is real and valid), explain the mechanism and importance of DMARD adherence, and offer solutions (take with food, antiemetics, folic acid, switch to subcutaneous MTX which causes less GI effects). Stopping DMARDs is the most common preventable cause of RA flares. Patient education must be collaborative, not dismissive.'},
+    {type:'sata',pts:25,
+     scenario:'The nurse is preparing A.J.\'s discharge teaching plan for long-term RA self-management.',
+     q:'Select ALL instructions that should be INCLUDED in the discharge teaching plan:',
+     opts:['Use active exercise rather than passive whenever possible.',
+           'Incorporate rest periods between activities to manage fatigue.',
+           'Avoid all forms of jarring exercise like jogging and horseback riding.',
+           'Exercise on both good and bad days — consistency is important.',
+           'Stop exercising completely when pain increases.',
+           'We will arrange Physical Therapy and Occupational Therapy before you leave.'],
+     correctSet:[0,1,2,3,5],
+     explain:'Correct: A (active > passive exercise), B (rest periods — fatigue is systemic in RA), C (avoid jarring exercises), D (exercise on good AND bad days), F (PT/OT referrals before discharge). INCORRECT: E — do NOT stop completely; reduce repetitions during flares but maintain consistency. PT for mobility, OT for adaptive equipment and joint protection strategies.'},
+    {type:'dosage',pts:30,
+     scenario:'A.J. (58 kg) is being started on Methotrexate 0.3 mg/kg PO weekly, plus Folic Acid 1 mg PO daily. Methotrexate available: 2.5 mg tablets. Folic acid available: 1 mg tablets.',
+     q:'What is the WEEKLY Methotrexate dose in mg?',
+     formula:'MTX dose = 0.3 mg/kg × 58 kg\nTablets   = dose ÷ 2.5 mg/tablet',
+     unit:'mg (weekly MTX dose)',ans:17.4,tolerance:0.1,
+     explain:'0.3 × 58 = 17.4 mg weekly. 17.4 ÷ 2.5 = 6.96 tablets (round to 7 tablets = 17.5 mg — confirm with provider). Practical consideration: MTX also comes in 5 mg, 7.5 mg, and 10 mg tablets for easier dosing. Folic acid 1 mg daily = 1 tablet. Administer MTX on the same day every week. Folic acid reduces side effects (nausea, mucositis, hair thinning) without reducing efficacy. Female patients of childbearing age: confirm negative pregnancy test; use contraception.'}
+  ]
+}
+];
+
+// ═══════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════
+const AVATARS=['🧑‍⚕️','👩‍⚕️','👨‍⚕️','🩺','💊','🔬','🏥','⚕️'];
+let S={mode:'solo',isSolo:true,roomCode:null,myId:null,myName:'',isHost:false,
+       completedRooms:[],roomScores:{},currentRoomId:null,currentQ:0,
+       teamHearts:3,myRoomScore:0,answered:false,returnTo:'lobby',pollTimer:null,
+       sataSelected:new Set()};
+
+// Storage
+async function sGet(k,sh=false){try{const r=await window.storage.get(k,sh);return r?JSON.parse(r.value):null;}catch(e){return null;}}
+async function sSet(k,v,sh=false){try{await window.storage.set(k,JSON.stringify(v),sh);return true;}catch(e){return false;}}
+
+// UI
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showLoading(v){document.getElementById('loading').classList.toggle('show',v);}
+function toast(msg,type='teal',dur=2800){const t=document.getElementById('toast');t.className=`toast ${type}`;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function genCode(){return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');}
+function genId(){return Math.random().toString(36).slice(2,10);}
+
+function showPanel(id){hidePanels();document.getElementById(id).style.display='block';}
+function hidePanels(){['create-panel','join-panel'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
+
+// X-ray animation
+setInterval(()=>{
+  document.querySelectorAll('.bone-seg').forEach(el=>{
+    el.classList.toggle('lit',Math.random()>.5);
+  });
+},800);
+
+// ═══════════════════════════════════════════════════
+//  PRESENTATION
+// ═══════════════════════════════════════════════════
+function openPresentation(){
+  buildSlides();
+  showScreen('presentation');
+  showSlide(0);
+}
+function buildSlides(){
+  const container=document.getElementById('slides-container');
+  const dots=document.getElementById('slide-dots');
+  container.innerHTML='';dots.innerHTML='';
+  document.getElementById('tot-slides').textContent=SLIDES.length;
+  SLIDES.forEach((s,i)=>{
+    container.innerHTML+=buildSlide(s,i);
+    dots.innerHTML+=`<div class="sdot${i===0?' active':''}" onclick="showSlide(${i})" id="sdot-${i}"></div>`;
+  });
+}
+function buildSlide(s,i){
+  if(s.type==='hero'){
+    return `<div class="slide s-hero${i===0?' active':''}">
+      <div class="s-hero-eyebrow">${s.eyebrow}</div>
+      <div class="s-hero-title">${s.title.replace('\n','<br>')}</div>
+      <div class="s-hero-sub">${s.sub}</div>
+      <div class="s-hero-tags">${s.tags.map(t=>`<span class="tag tag-teal">${t}</span>`).join('')}</div>
+    </div>`;
+  }
+  if(s.type==='two-col'){
+    const lc=s.left,rc=s.right;
+    return `<div class="slide s-content${i===0?' active':''}">
+      <div class="s-content-inner">
+        <div><div class="slide-eyebrow">${s.eyebrow}</div><div class="slide-h1">${s.title}</div></div>
+        <div class="s-two-col">
+          <div class="s-col-card"><h3><span class="icon-circle" style="background:${lc.color}22;color:${lc.color}">${lc.icon}</span>${lc.title}</h3><ul>${lc.items.map(it=>`<li>${it}</li>`).join('')}</ul></div>
+          <div class="s-col-card"><h3><span class="icon-circle" style="background:${rc.color}22;color:${rc.color}">${rc.icon}</span>${rc.title}</h3><ul>${rc.items.map(it=>`<li>${it}</li>`).join('')}</ul></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(s.type==='icon-grid'){
+    const infoHtml=s.info?`<div class="slide-info">${s.info.text}</div>`:'';
+    const alertHtml=s.alert?`<div class="slide-alert">${s.alert.text}</div>`:'';
+    return `<div class="slide s-content${i===0?' active':''}">
+      <div class="s-content-inner">
+        <div><div class="slide-eyebrow">${s.eyebrow}</div><div class="slide-h1">${s.title}</div></div>
+        ${infoHtml}${alertHtml}
+        <div class="s-icon-grid">${s.cards.map(c=>`<div class="icon-card"><div class="ic-dot" style="background:${c.bg}">${c.icon}</div><div class="ic-body"><h4>${c.title}</h4><p>${c.text}</p></div></div>`).join('')}</div>
+      </div>
+    </div>`;
+  }
+  if(s.type==='steps'){
+    const alertHtml=s.alert?`<div class="slide-alert">${s.alert.text}</div>`:'';
+    const infoHtml=s.info?`<div class="slide-info">${s.info.text}</div>`:'';
+    return `<div class="slide s-content${i===0?' active':''}">
+      <div class="s-content-inner">
+        <div><div class="slide-eyebrow">${s.eyebrow}</div><div class="slide-h1">${s.title}</div></div>
+        ${alertHtml}${infoHtml}
+        <div class="s-steps">${s.steps.map(st=>`<div class="step-item"><div class="step-num">${st.n}</div><div class="step-body"><h4>${st.title}</h4><p>${st.text}</p></div></div>`).join('')}</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="slide s-content${i===0?' active':''}"><div style="padding:2rem">${JSON.stringify(s)}</div></div>`;
+}
+let curSlideIdx=0;
+function showSlide(n){
+  const slides=document.querySelectorAll('.slide');
+  slides.forEach(s=>s.classList.remove('active'));
+  slides[n]?.classList.add('active');
+  document.querySelectorAll('.sdot').forEach((d,i)=>{
+    d.classList.toggle('active',i===n);
+    d.classList.toggle('done',i<n&&i!==n);
+  });
+  document.getElementById('cur-slide').textContent=n+1;
+  curSlideIdx=n;
+}
+function nextSlide(){if(curSlideIdx<SLIDES.length-1)showSlide(curSlideIdx+1);}
+function prevSlide(){if(curSlideIdx>0)showSlide(curSlideIdx-1);}
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('presentation').classList.contains('active')){
+    if(e.key==='ArrowRight')nextSlide();
+    if(e.key==='ArrowLeft')prevSlide();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+//  SOLO
+// ═══════════════════════════════════════════════════
+function startSolo(){
+  const name=prompt('Your name for Solo Play:','Nurse');
+  if(!name)return;
+  S={...S,isSolo:true,myName:name,myId:genId(),isHost:true,completedRooms:[],roomScores:{},teamHearts:3};
+  showScreen('game');renderGameHub();
+}
+
+// ═══════════════════════════════════════════════════
+//  MULTIPLAYER
+// ═══════════════════════════════════════════════════
+async function createRoom(){
+  const name=document.getElementById('create-name').value.trim();
+  if(!name){toast('Enter your name','amber');return;}
+  showLoading(true);
+  const code=genCode(),myId=genId(),avatar=AVATARS[0];
+  const teamName=document.getElementById('create-team').value.trim()||'Clinical Team';
+  const rd={code,teamName,hostId:myId,players:{[myId]:{id:myId,name,avatar,score:0,joined:Date.now()}},
+             gameStarted:false,completedRooms:[],teamHearts:3,answers:{},created:Date.now()};
+  await sSet(`rm:${code}`,rd,true);
+  S={...S,mode:'multi',isSolo:false,roomCode:code,myId,myName:name,isHost:true,completedRooms:[],roomScores:{},teamHearts:3};
+  hidePanels();showLoading(false);
+  document.getElementById('wait-title').textContent=teamName;
+  document.getElementById('wait-code').textContent=code;
+  showScreen('waiting');renderWaiting(rd);startPolling();
+}
+async function joinRoom(){
+  const name=document.getElementById('join-name').value.trim();
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  if(!name){toast('Enter name','amber');return;}
+  if(code.length!==4){toast('Enter 4-letter code','amber');return;}
+  showLoading(true);
+  const rd=await sGet(`rm:${code}`,true);
+  if(!rd){showLoading(false);toast('Room not found','red');return;}
+  if(Object.keys(rd.players).length>=6){showLoading(false);toast('Room full','red');return;}
+  if(rd.gameStarted){showLoading(false);toast('Game already started','amber');return;}
+  const myId=genId(),avatar=AVATARS[Object.keys(rd.players).length%AVATARS.length];
+  rd.players[myId]={id:myId,name,avatar,score:0,joined:Date.now()};
+  await sSet(`rm:${code}`,rd,true);
+  S={...S,mode:'multi',isSolo:false,roomCode:code,myId,myName:name,isHost:false,completedRooms:[],roomScores:{},teamHearts:3};
+  hidePanels();showLoading(false);
+  document.getElementById('wait-title').textContent=rd.teamName||'Waiting';
+  document.getElementById('wait-code').textContent=code;
+  showScreen('waiting');renderWaiting(rd);startPolling();
+}
+function renderWaiting(rd){
+  const players=Object.values(rd.players).sort((a,b)=>a.joined-b.joined);
+  document.getElementById('player-count').textContent=players.length;
+  const grid=document.getElementById('players-grid');
+  grid.innerHTML=players.map((p,i)=>`<div class="player-slot filled"><div class="ps-avatar">${p.avatar}</div><div class="ps-name">${p.name}${p.id===S.myId?' (You)':''}</div><div class="ps-badge${p.id===rd.hostId?' host':''}"> ${p.id===rd.hostId?'⭐ Host':'Player '+(i+1)}</div></div>`).join('')
+    +Array.from({length:Math.max(0,6-players.length)},()=>`<div class="player-slot empty"><div class="ps-avatar">👤</div><div class="ps-name">Open</div></div>`).join('');
+  const sa=document.getElementById('start-btn-area');
+  if(S.isHost){sa.innerHTML=`<button class="btn btn-primary" onclick="hostStart()">🚀 Start Game (${players.length} player${players.length>1?'s':''})</button>`;}
+  else{sa.innerHTML=`<div style="font-size:13px;color:var(--text2);text-align:center;padding:1rem;">Waiting for host to start…</div>`;}
+}
+async function hostStart(){
+  showLoading(true);
+  const rd=await sGet(`rm:${S.roomCode}`,true);
+  if(!rd){showLoading(false);toast('Error','red');return;}
+  rd.gameStarted=true;rd.completedRooms=[];rd.teamHearts=3;rd.answers={};
+  await sSet(`rm:${S.roomCode}`,rd,true);
+  showLoading(false);loadGame(rd);
+}
+function loadGame(rd){
+  S.completedRooms=rd.completedRooms||[];S.teamHearts=rd.teamHearts;
+  showScreen('game');renderGameHub();
+}
+function copyCode(){navigator.clipboard?.writeText(S.roomCode).then(()=>toast('Code copied! 📋','teal'));}
+
+// Polling
+function startPolling(){stopPolling();S.pollTimer=setInterval(pollRoom,2000);}
+function stopPolling(){if(S.pollTimer){clearInterval(S.pollTimer);S.pollTimer=null;}}
+async function pollRoom(){
+  if(S.isSolo||!S.roomCode)return;
+  const rd=await sGet(`rm:${S.roomCode}`,true);if(!rd)return;
+  S.teamHearts=rd.teamHearts;
+  const cur=document.querySelector('.screen.active')?.id;
+  if(cur==='waiting'){renderWaiting(rd);if(rd.gameStarted&&!S.isHost){S.completedRooms=rd.completedRooms||[];loadGame(rd);}return;}
+  if(cur==='game'){S.completedRooms=rd.completedRooms||[];renderGameHub();return;}
+  if(cur==='qscreen'){syncAnswerTracker(rd);return;}
+}
+
+// ═══════════════════════════════════════════════════
+//  GAME HUB
+// ═══════════════════════════════════════════════════
+function renderGameHub(){
+  document.getElementById('gt-room').textContent=S.isSolo?'SOLO':`ROOM ${S.roomCode}`;
+  document.getElementById('gt-title').textContent=S.myName+"'s Game";
+  const h=S.teamHearts;
+  document.getElementById('top-hearts').textContent='❤️'.repeat(h)+'🖤'.repeat(3-h);
+  document.getElementById('top-score').textContent=Object.values(S.roomScores).reduce((a,b)=>a+b,0);
+  renderScoreboard();
+  const grid=document.getElementById('room-grid-game');
+  grid.innerHTML=ROOMS.map((room,i)=>{
+    const done=S.completedRooms.includes(room.id);
+    const locked=i>0&&!S.completedRooms.includes(ROOMS[i-1].id);
+    const cls=done?'rs-done':locked?'rs-locked':'rs-open';
+    const lbl=done?'Completed':locked?'Locked':'Available';
+    return `<div class="rcard ${room.color}${done?' completed':locked?' locked':''}" onclick="${locked?'':` enterRoom('${room.id}')`}">
+      <div class="rcard-eye">${room.icon} ${done?'✓ ':locked?'🔒 ':''}${room.subtitle}</div>
+      <div class="rcard-name">${room.name}</div>
+      <div class="rcard-desc">${room.desc}</div>
+      <div class="rcard-foot"><span>${room.questions.length} challenges</span><span class="rcard-status ${cls}">${lbl}${done&&S.roomScores[room.id]?' · '+S.roomScores[room.id]+'pts':''}</span></div>
+    </div>`;
+  }).join('');
+}
+async function renderScoreboard(){
+  const strip=document.getElementById('scoreboard-strip');
+  if(S.isSolo){
+    const total=Object.values(S.roomScores).reduce((a,b)=>a+b,0);
+    strip.innerHTML=`<div class="sb-player me"><div class="sb-avatar">🧑‍⚕️</div><div><div class="sb-name">${S.myName} (You)</div><div class="sb-score">${total} pts</div></div></div>`;
+    return;
+  }
+  const rd=await sGet(`rm:${S.roomCode}`,true);if(!rd)return;
+  strip.innerHTML=Object.values(rd.players).sort((a,b)=>b.score-a.score).map(p=>`<div class="sb-player${p.id===S.myId?' me':''}"><div class="sb-avatar">${p.avatar}</div><div><div class="sb-name">${p.name}${p.id===S.myId?' (You)':''}</div><div class="sb-score">${p.score} pts</div></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  ENTER ROOM
+// ═══════════════════════════════════════════════════
+async function enterRoom(roomId){
+  const room=ROOMS.find(r=>r.id===roomId);
+  S.currentRoomId=roomId;S.currentQ=0;S.myRoomScore=0;S.answered=false;S.sataSelected=new Set();
+  if(!S.isSolo){
+    const rd=await sGet(`rm:${S.roomCode}`,true);
+    if(rd){S.teamHearts=rd.teamHearts;rd.answers={};rd.currentRoomId=roomId;rd.currentQ=0;await sSet(`rm:${S.roomCode}`,rd,true);}
+  } else {S.teamHearts=3;}
+  document.getElementById('q-room-name').textContent=room.name;
+  document.getElementById('q-room-sub').textContent=room.subtitle;
+  renderQHearts();
+  document.getElementById('q-dots').innerHTML=room.questions.map((_,i)=>`<div class="pdot${i===0?' active':''}" id="qpdot-${i}"></div>`).join('');
+  showScreen('qscreen');renderQuestion();
+}
+function renderQHearts(){
+  const h=S.teamHearts;
+  document.getElementById('q-hearts').innerHTML='❤️'.repeat(h)+'🖤'.repeat(3-h);
+}
+function updateDots(){
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  room.questions.forEach((_,i)=>{
+    const d=document.getElementById(`qpdot-${i}`);
+    if(d)d.className='pdot'+(i===S.currentQ?' active':i<S.currentQ?' done':'');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER QUESTION
+// ═══════════════════════════════════════════════════
+function renderQuestion(){
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  const q=room.questions[S.currentQ];
+  S.answered=false;S.sataSelected=new Set();
+  updateDots();
+  // reset answered tracker
+  document.getElementById('answered-tracker').innerHTML=`<span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);">Answered:</span><span class="at-pip" id="atpip-me"></span>`;
+  const area=document.getElementById('q-area');
+  if(q.type==='mc'||!q.type){
+    area.innerHTML=`<div class="q-card">
+      <div class="q-meta"><span class="q-num-label">Q ${S.currentQ+1}/${room.questions.length}</span><span class="q-pts-badge">+${q.pts} pts</span></div>
+      ${q.scenario?`<div class="q-scenario">📋 ${q.scenario}</div>`:''}
+      <div class="q-text">${q.q}</div>
+      <div class="opts">${q.opts.map((o,i)=>`<button class="opt-btn" id="opt-${i}" onclick="selectAnswer(${i})"><span class="opt-letter">${String.fromCharCode(65+i)}</span>${o}</button>`).join('')}</div>
+      <div id="fb-area"></div>
+    </div><button class="btn-next-q" id="btn-nq" onclick="nextQ()">Continue →</button>`;
+  } else if(q.type==='sata'){
+    area.innerHTML=`<div class="q-card">
+      <div class="q-meta"><span class="q-num-label">SATA ${S.currentQ+1}/${room.questions.length}</span><span class="q-pts-badge">+${q.pts} pts</span></div>
+      ${q.scenario?`<div class="q-scenario">📋 ${q.scenario}</div>`:''}
+      <div class="q-text">${q.q}</div>
+      <div class="opts" id="sata-opts">${q.opts.map((o,i)=>`<div class="sata-opt" id="sata-${i}" onclick="toggleSata(${i})"><div class="sata-check" id="satacheck-${i}"></div>${o}</div>`).join('')}</div>
+      <button class="sata-submit-btn" id="sata-sub" onclick="submitSata()">Submit Selections →</button>
+      <div id="fb-area"></div>
+    </div><button class="btn-next-q" id="btn-nq" onclick="nextQ()">Continue →</button>`;
+  } else if(q.type==='dosage'){
+    area.innerHTML=`<div class="q-card">
+      <div class="q-meta"><span class="q-num-label">Dosage Calc ${S.currentQ+1}/${room.questions.length}</span><span class="q-pts-badge">+${q.pts} pts</span></div>
+      <div class="q-scenario">⚖️ ${q.scenario}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="formula-block"><strong>Formula Guide:</strong><br>${q.formula}</div>
+      <div class="dosage-row">
+        <input type="number" step="0.01" class="dosage-inp" id="dinp" placeholder="Answer"/>
+        <span class="dosage-unit">${q.unit}</span>
+        <button class="btn-submit-dose" onclick="checkDose()">Submit →</button>
+      </div>
+      <div id="fb-area"></div>
+    </div><button class="btn-next-q" id="btn-nq" onclick="nextQ()">Continue →</button>`;
+    document.getElementById('dinp').addEventListener('keypress',e=>{if(e.key==='Enter')checkDose();});
+  }
+  if(!S.isSolo)pollRoom();
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER HANDLERS
+// ═══════════════════════════════════════════════════
+async function selectAnswer(idx){
+  if(S.answered)return;S.answered=true;
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  const q=room.questions[S.currentQ];
+  const correct=idx===q.ans;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  document.getElementById(`opt-${idx}`).classList.add(correct?'correct':'wrong');
+  if(!correct)document.getElementById(`opt-${q.ans}`).classList.add('correct');
+  await processAnswer(correct,q.pts);
+}
+
+function toggleSata(idx){
+  if(S.answered)return;
+  const opt=document.getElementById(`sata-${idx}`);
+  const check=document.getElementById(`satacheck-${idx}`);
+  if(S.sataSelected.has(idx)){S.sataSelected.delete(idx);opt.classList.remove('selected');check.textContent='';}
+  else{S.sataSelected.add(idx);opt.classList.add('selected');check.textContent='✓';}
+}
+async function submitSata(){
+  if(S.answered)return;S.answered=true;
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  const q=room.questions[S.currentQ];
+  document.getElementById('sata-sub').style.display='none';
+  document.querySelectorAll('.sata-opt').forEach(el=>el.classList.add('disabled'));
+  const correctSet=new Set(q.correctSet);
+  const selected=S.sataSelected;
+  let allCorrect=true;
+  q.opts.forEach((_,i)=>{
+    const opt=document.getElementById(`sata-${i}`);
+    const inCorrect=correctSet.has(i),inSelected=selected.has(i);
+    if(inCorrect&&inSelected){opt.classList.remove('selected');opt.classList.add('correct-sel');}
+    else if(!inCorrect&&inSelected){opt.classList.remove('selected');opt.classList.add('incorrect-sel');allCorrect=false;}
+    else if(inCorrect&&!inSelected){opt.classList.add('missed');allCorrect=false;}
+  });
+  // partial scoring: award pts proportional
+  const totalCorrect=correctSet.size;
+  const rightPicks=[...selected].filter(i=>correctSet.has(i)).length;
+  const wrongPicks=[...selected].filter(i=>!correctSet.has(i)).length;
+  const pct=Math.max(0,(rightPicks-wrongPicks)/totalCorrect);
+  const earnedPts=Math.round(q.pts*pct);
+  const correct=pct===1;
+  await processAnswer(correct,q.pts,null,earnedPts);
+}
+async function checkDose(){
+  if(S.answered)return;
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  const q=room.questions[S.currentQ];
+  const val=parseFloat(document.getElementById('dinp').value);
+  if(isNaN(val)){toast('Enter a number','amber');return;}
+  S.answered=true;document.getElementById('dinp').disabled=true;
+  const correct=Math.abs(val-q.ans)<=q.tolerance;
+  await processAnswer(correct,q.pts,val);
+}
+
+async function processAnswer(correct,pts,userVal=null,earnedOverride=null){
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  const q=room.questions[S.currentQ];
+  const qKey=`${S.currentRoomId}_${S.currentQ}`;
+  let earnedPts=0,firstCorrect=false;
+  if(S.isSolo){
+    if(correct||earnedOverride!==null){
+      earnedPts=earnedOverride!==null?earnedOverride:pts;
+      S.myRoomScore+=earnedPts;
+    }
+    if(!correct&&earnedOverride===null){S.teamHearts=Math.max(0,S.teamHearts-1);}
+    renderQHearts();
+  } else {
+    const rd=await sGet(`rm:${S.roomCode}`,true);
+    if(rd){
+      const existCorrect=Object.values(rd.answers).some(a=>a.qKey===qKey&&a.isCorrect);
+      if(correct){earnedPts=existCorrect?Math.floor(pts*.5):pts;firstCorrect=!existCorrect;}
+      else if(earnedOverride!==null&&earnedOverride>0){earnedPts=existCorrect?Math.floor(earnedOverride*.5):earnedOverride;firstCorrect=!existCorrect;}
+      else if(!correct&&earnedOverride===null){rd.teamHearts=Math.max(0,(rd.teamHearts||3)-1);}
+      if(earnedPts>0&&rd.players[S.myId])rd.players[S.myId].score=(rd.players[S.myId].score||0)+earnedPts;
+      S.myRoomScore+=earnedPts;
+      if(!rd.answers)rd.answers={};
+      rd.answers[S.myId]={qKey,isCorrect:correct,ts:Date.now(),earned:earnedPts};
+      S.teamHearts=rd.teamHearts;
+      await sSet(`rm:${S.roomCode}`,rd,true);
+      renderQHearts();
+    }
+  }
+  const fb=document.getElementById('fb-area');
+  let feedbackMsg='';
+  if(q.type==='sata'){feedbackMsg=earnedOverride===q.pts?'✅ All correct! ':earnedOverride>0?`⚠️ Partial credit (${earnedOverride}/${pts} pts). `:'❌ Incorrect selection. ';}
+  else{feedbackMsg=correct?'✅ Correct! ':'❌ '+(userVal!==null?`Answer: ${userVal}. Correct: ${q.ans} ${q.unit||''}. `:' Incorrect. ');}
+  fb.innerHTML=`<div class="feedback-box ${correct||earnedOverride>0?'fb-correct':'fb-wrong'}">${feedbackMsg}${q.explain}</div>
+    ${firstCorrect?'<div class="first-badge">⚡ First Correct! Full points</div>':''}
+    ${!S.isSolo&&!firstCorrect&&(correct||earnedOverride>0)?'<div class="first-badge" style="background:var(--blue-dim);border-color:var(--blue);color:var(--blue);">✓ Correct — 50% points</div>':''}`;
+  document.getElementById('btn-nq').classList.add('vis');
+  if(S.teamHearts===0&&!correct&&earnedOverride===null){
+    setTimeout(async()=>{
+      toast('No hearts! Room restarting...','red',2000);
+      if(!S.isSolo){const rd=await sGet(`rm:${S.roomCode}`,true);if(rd){rd.teamHearts=3;await sSet(`rm:${S.roomCode}`,rd,true);}}
+      setTimeout(()=>enterRoom(S.currentRoomId),2000);
+    },1000);
+  }
+}
+function syncAnswerTracker(rd){
+  if(!rd||!rd.answers)return;
+  const qKey=`${S.currentRoomId}_${S.currentQ}`;
+  const players=Object.values(rd.players);
+  const at=document.getElementById('answered-tracker');if(!at)return;
+  at.innerHTML=`<span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);">Answered:</span>`
+    +players.map(p=>{const ans=rd.answers?.[p.id];const done=ans&&ans.qKey===qKey;
+      return `<span title="${p.name}" style="display:inline-flex;align-items:center;gap:3px;margin-right:4px;"><span class="at-pip${done?' answered':''}"></span><span style="font-size:11px;color:var(--text3);">${p.name.split(' ')[0]}</span></span>`;
+    }).join('');
+  renderScoreboard();
+}
+
+// ═══════════════════════════════════════════════════
+//  NEXT Q / ROOM COMPLETE
+// ═══════════════════════════════════════════════════
+async function nextQ(){
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  if(S.currentQ<room.questions.length-1){
+    S.currentQ++;S.sataSelected=new Set();
+    if(!S.isSolo){const rd=await sGet(`rm:${S.roomCode}`,true);if(rd){rd.answers={};rd.currentQ=S.currentQ;await sSet(`rm:${S.roomCode}`,rd,true);}}
+    renderQuestion();
+  } else {await completeRoom();}
+}
+function backToHub(){showScreen('game');renderGameHub();}
+
+async function completeRoom(){
+  const room=ROOMS.find(r=>r.id===S.currentRoomId);
+  if(!S.completedRooms.includes(room.id)){
+    S.completedRooms.push(room.id);S.roomScores[room.id]=S.myRoomScore;
+    if(!S.isSolo){
+      const rd=await sGet(`rm:${S.roomCode}`,true);
+      if(rd){if(!rd.completedRooms.includes(room.id))rd.completedRooms.push(room.id);rd.teamHearts=3;await sSet(`rm:${S.roomCode}`,rd,true);}
+      S.teamHearts=3;
+    }
+  }
+  document.getElementById('rc-sub').textContent=`"${room.name}" cleared!`;
+  let scoresHtml='';
+  if(S.isSolo){scoresHtml=`<div class="rc-ps winner"><div class="rc-ps-name">🧑‍⚕️ ${S.myName}</div><div class="rc-ps-val">${S.myRoomScore}</div></div>`;}
+  else{
+    const rd=await sGet(`rm:${S.roomCode}`,true);
+    if(rd)scoresHtml=Object.values(rd.players).sort((a,b)=>b.score-a.score).map((p,i)=>`<div class="rc-ps${i===0?' winner':''}"><div class="rc-ps-name">${p.avatar} ${p.name}</div><div class="rc-ps-val">${p.score}</div></div>`).join('');
+  }
+  document.getElementById('rc-scores').innerHTML=scoresHtml;
+  document.getElementById('kf-box').innerHTML=`<div class="kf-title">📚 Key Clinical Facts — ${room.name}</div><ul class="kf-list">${room.keyfacts.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+  const idx=ROOMS.findIndex(r=>r.id===S.currentRoomId);
+  const btn=document.getElementById('btn-next-room');
+  if(idx<ROOMS.length-1){btn.style.display='inline-block';btn.textContent=`Next: ${ROOMS[idx+1].name} →`;}
+  else btn.style.display='none';
+  showScreen('rcomplete');
+  if(S.completedRooms.length===ROOMS.length)setTimeout(showFinal,1800);
+}
+function goNextRoom(){const idx=ROOMS.findIndex(r=>r.id===S.currentRoomId);if(idx<ROOMS.length-1)enterRoom(ROOMS[idx+1].id);}
+
+async function showFinal(){
+  let podHtml='';
+  const medals=['🥇','🥈','🥉'];
+  if(S.isSolo){const total=Object.values(S.roomScores).reduce((a,b)=>a+b,0);podHtml=`<div class="podium-item"><div class="podium-rank">🥇</div><div class="podium-name">${S.myName}</div><div class="podium-score">${total}</div></div>`;}
+  else{const rd=await sGet(`rm:${S.roomCode}`,true);if(rd)Object.values(rd.players).sort((a,b)=>b.score-a.score).slice(0,3).forEach((p,i)=>{podHtml+=`<div class="podium-item"><div class="podium-rank">${medals[i]||'🏅'}</div><div class="podium-name">${p.avatar} ${p.name}</div><div class="podium-score">${p.score}</div></div>`;});}
+  document.getElementById('final-podium').innerHTML=podHtml;
+  showScreen('final');stopPolling();
+}
+
+// ═══════════════════════════════════════════════════
+//  LOBBY
+// ═══════════════════════════════════════════════════
+function goLobby(){
+  stopPolling();
+  S={mode:'solo',isSolo:true,roomCode:null,myId:null,myName:'',isHost:false,completedRooms:[],roomScores:{},currentRoomId:null,currentQ:0,teamHearts:3,myRoomScore:0,answered:false,returnTo:'lobby',pollTimer:null,sataSelected:new Set()};
+  hidePanels();showScreen('lobby');
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER SHEET
+// ═══════════════════════════════════════════════════
+function openAnswerSheet(){
+  S.returnTo=document.querySelector('.screen.active')?.id||'lobby';
+  buildAsTabs();showScreen('answersheet');
+}
+function closeAnswerSheet(){showScreen(S.returnTo||'lobby');}
+function buildAsTabs(){
+  const bar=document.getElementById('as-tabs');
+  bar.innerHTML=ROOMS.map((r,i)=>`<button class="as-tab${i===0?' active':''}" onclick="showAsTab(${i})">${r.icon} ${r.name.split(' ').slice(0,2).join(' ')}</button>`).join('')
+    +`<button class="as-tab" onclick="showAsTab(-1)">📐 Formulas</button>`;
+  renderAsContent(0);
+}
+function showAsTab(idx){
+  document.querySelectorAll('.as-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  renderAsContent(idx);
+}
+function renderAsContent(idx){
+  const cont=document.getElementById('as-content');
+  if(idx===-1){
+    const dosQs=ROOMS.flatMap(room=>room.questions.filter(q=>q.type==='dosage').map(q=>({room,q})));
+    cont.innerHTML=`<div class="as-section-hdr">📐 All Weight-Based Dosage Formulas</div>`
+      +dosQs.map(({room,q})=>`<div class="as-q-item">
+        <div class="as-q-meta">${room.icon} ${room.name} &nbsp;•&nbsp; ${q.pts} pts &nbsp;•&nbsp; Dosage Calculation</div>
+        <div class="as-q-scenario">⚖️ ${q.scenario}</div>
+        <div class="as-q-text">${q.q}</div>
+        <div class="as-formula-block"><strong>Formula:</strong><br>${q.formula}</div>
+        <div class="as-answer-box">✓ Answer: ${q.ans} ${q.unit}</div>
+        <div class="as-rationale">${q.explain}</div>
+      </div>`).join('');
+    return;
+  }
+  const room=ROOMS[idx];
+  cont.innerHTML=`<div class="as-section-hdr">${room.icon} ${room.name} <span class="tag tag-teal">${room.subtitle}</span></div>
+    <div class="as-kf"><h4>📚 Key Clinical Facts</h4><ul>${room.keyfacts.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+    ${room.questions.map((q,qi)=>{
+      if(q.type==='mc'||!q.type){
+        return `<div class="as-q-item">
+          <div class="as-q-meta">Q${qi+1} of ${room.questions.length} &nbsp;•&nbsp; ${q.pts} pts &nbsp;•&nbsp; Multiple Choice</div>
+          ${q.scenario?`<div class="as-q-scenario">📋 ${q.scenario}</div>`:''}
+          <div class="as-q-text">${q.q}</div>
+          <ul class="as-opts-list">${q.opts.map((o,i)=>`<li class="${i===q.ans?'correct':''}">${String.fromCharCode(65+i)}. ${o}${i===q.ans?' ← Correct':''}</li>`).join('')}</ul>
+          <div class="as-rationale"><strong style="color:var(--teal);">Rationale:</strong> ${q.explain}</div>
+        </div>`;
+      } else if(q.type==='sata'){
+        return `<div class="as-q-item">
+          <div class="as-q-meta">Q${qi+1} of ${room.questions.length} &nbsp;•&nbsp; ${q.pts} pts &nbsp;•&nbsp; SATA (Select All That Apply)</div>
+          ${q.scenario?`<div class="as-q-scenario">📋 ${q.scenario}</div>`:''}
+          <div class="as-q-text">${q.q}</div>
+          <ul class="as-opts-list">${q.opts.map((o,i)=>`<li class="${q.correctSet.includes(i)?'correct':''}">${String.fromCharCode(65+i)}. ${o}${q.correctSet.includes(i)?' ← Include':' ← Exclude'}</li>`).join('')}</ul>
+          <div class="as-rationale"><strong style="color:var(--teal);">Rationale:</strong> ${q.explain}</div>
+        </div>`;
+      } else {
+        return `<div class="as-q-item">
+          <div class="as-q-meta">Q${qi+1} of ${room.questions.length} &nbsp;•&nbsp; ${q.pts} pts &nbsp;•&nbsp; ⚖️ Dosage Calculation</div>
+          <div class="as-q-scenario">⚖️ ${q.scenario}</div>
+          <div class="as-q-text">${q.q}</div>
+          <div class="as-formula-block"><strong>Formula:</strong><br>${q.formula}</div>
+          <div class="as-answer-box">✓ Answer: ${q.ans} ${q.unit}</div>
+          <div class="as-rationale"><strong style="color:var(--teal);">Steps:</strong> ${q.explain}</div>
+        </div>`;
+      }
+    }).join('')}
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-top:1rem;">
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text2);">🎯 Study Tip</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;">Practice these until you can answer without referring to the rationale. For weight-based dosing, always write each step explicitly: (1) calculate dose in mg, (2) apply max cap if applicable, (3) convert to volume. Two-nurse verification is required for all high-alert medications including insulin, opioids, anticoagulants, and IV chemotherapy.</div>
+    </div>`;
+}
+</script>
+</body>
+</html>
